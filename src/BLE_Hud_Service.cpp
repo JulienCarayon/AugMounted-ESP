@@ -151,6 +151,7 @@ void BLE_Hud_Service::createService(void)
 Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
 {
     if (deviceConnected) {
+        new_data3._device_connected = "yes";
         deviceDisconnected = deviceConnected;
 
         _get_speed = pCharacteristicSpeed->getValue();
@@ -190,7 +191,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
                 _current_speed += _get_speed[i];
             }
             #ifdef SHOW_BLE_DATA
-            Serial.print("Speed :");
+            Serial.print("Speed : ");
             Serial.println(_current_speed);
             #endif
             //if()  -> en fonction du mode changer d'emplacement 
@@ -203,7 +204,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
                 _current_altitude += _get_altitude[i];
             }
             #ifdef SHOW_BLE_DATA
-            Serial.print("Altitude :");
+            Serial.print("Altitude : ");
             Serial.println(_current_altitude);
             #endif
             new_data3._get_altitude = _get_altitude;
@@ -215,7 +216,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
                 _current_time += _get_time[i];
             }
             #ifdef SHOW_BLE_DATA
-            Serial.print("Time :");
+            Serial.print("Time : ");
             Serial.println(_current_time);
             #endif
             new_data3._get_time = _get_time;
@@ -240,7 +241,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
                 _phone_battery += _get_phone_battery[i];
             }
             #ifdef SHOW_BLE_DATA
-            Serial.print("Phone battery :");
+            Serial.print("Phone battery : ");
             Serial.println(_phone_battery);
             #endif
             new_data3._get_phone_battery = _get_phone_battery;
@@ -252,7 +253,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
                 _local_temperature += _get_local_temperature[i];
             }
             #ifdef SHOW_BLE_DATA
-            Serial.print("Local temperature :");
+            Serial.print("Local temperature : ");
             Serial.println(_local_temperature);
             #endif
             new_data3._get_local_temperature = _get_local_temperature;
@@ -270,10 +271,11 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
         Serial.println("AugMounted restart advertising");
         deviceDisconnected = deviceConnected;
 
-        new_data3._get_altitude = "/";
-        new_data3._get_speed = "/";
-        new_data3._get_local_temperature = "/";
-        new_data3._get_time = "/";
+        new_data3._device_connected = "no";
+        new_data3._get_altitude = "--";
+        new_data3._get_speed = "--";
+        new_data3._get_local_temperature = "--";
+        new_data3._get_time = "";
     }
 
     return new_data3;

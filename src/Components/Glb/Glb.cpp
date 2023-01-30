@@ -16,7 +16,7 @@ void Glb::begin(void)
   _rotaryEncoder.setup(readEncoderISR);
 
   init();
-  drawMenu(false, 15);
+  drawMenu(false, MENU_THICKNESS);
   drawMenuTitle();
 }
 const unsigned char data [6] = {urban[1442] };
@@ -39,7 +39,7 @@ void Glb::rotary_loop(Move cursor, bool sw)
   }
   if (_sw && _cursoSt == LEFT) {
     Serial.println("-> Turn OFF system");
-    splashScreen(false, "DISCONNECT", "GOOD BYE !");
+    splashScreen(false, "AUGMOUNTED", "GOOD BYE !");
   }
   if (_sw && _cursoSt == RIGHT) {
     Serial.println("-> CONFIG");
@@ -62,7 +62,7 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
     // for voltage divider 
     if (_soc < (_old_soc - 3) || _soc > (_old_soc + 3))
     {
-      batteryManagement(_soc, false, 6);
+      batteryManagement(_soc, false, BATTERY_THICKNESS);
       _old_soc = _soc;
     }
   } else {
@@ -71,7 +71,7 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
     if (_phone_battery < (_old_phone_battery ) || _phone_battery > (_old_phone_battery))
     {
       Serial.println("test");
-      batteryManagement2(_phone_battery, false, 6);
+      batteryManagement2(_phone_battery, false, BATTERY_THICKNESS);
       _old_phone_battery = _phone_battery;
     }
   }  
@@ -139,16 +139,26 @@ void Glb::updateData(Data dt)
   // placement[3] : 3 -> for_each_mode(CURRENT_TIME)
 
   //moutain mode
+  if(dt._device_connected != _old_data._device_connected) {
+    if(dt._device_connected == "yes") {
+      deviceStatus(deviceConnected);
+      deviceConnected = true;
+    }
+    else {
+      deviceStatus(false);
+      deviceConnected = false;
+    }
+  }
   if(dt._get_speed != _old_data._get_speed) {
-    drawPrincipalData2(convertDataToString(dt._get_speed), 0);
+    drawData(convertDataToString(dt._get_speed), 0);
     _old_data._get_speed = dt._get_speed;
   }
   if(dt._get_altitude != _old_data._get_altitude) {
-    drawPrincipalData2(convertDataToString(dt._get_altitude), 1);
+    drawData(convertDataToString(dt._get_altitude), 1);
     _old_data._get_altitude = dt._get_altitude;
   }
   if(dt._get_local_temperature != _old_data._get_local_temperature) {
-    drawPrincipalData2(convertDataToString(dt._get_local_temperature), 2);
+    drawData(convertDataToString(dt._get_local_temperature), 2);
     _old_data._get_local_temperature = dt._get_local_temperature;
   }
   if(dt._get_time != _old_data._get_time) {
