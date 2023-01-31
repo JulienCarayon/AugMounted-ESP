@@ -62,7 +62,7 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
     // for voltage divider 
     if (_soc < (_old_soc - 3) || _soc > (_old_soc + 3))
     {
-      batteryManagement(_soc, false, BATTERY_THICKNESS);
+      deviceBatteryManagement(_soc, ARC_ROUNDED_END, BATTERY_THICKNESS);
       _old_soc = _soc;
     }
   } else {
@@ -71,7 +71,7 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
     if (_phone_battery < (_old_phone_battery ) || _phone_battery > (_old_phone_battery))
     {
       Serial.println("test");
-      batteryManagement2(_phone_battery, false, BATTERY_THICKNESS);
+      phoneBatteryManagement(_phone_battery, ARC_ROUNDED_END, BATTERY_THICKNESS);
       _old_phone_battery = _phone_battery;
     }
   }  

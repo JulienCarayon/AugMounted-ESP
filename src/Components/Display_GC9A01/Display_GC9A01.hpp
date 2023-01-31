@@ -32,13 +32,12 @@ public:
 
     void init(void);
     void splashScreen(bool inOut, String str1, String str2);
-    void developmentMode(void);
     void drawMenu(bool arcRoundedEnd, uint8_t thickness);
     void drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thickness, Move cursorSt);
-    void batteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
-    void batteryManagement2(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
+    void drawDynamicMenuIcons(bool state);
+    void deviceBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
+    void phoneBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
     void drawDataString(String str, int32_t x, int32_t y);
-    void test();
     void drawMenuTitle(void);
     void drawArcString(void);
     void drawTime(String actual_time);
@@ -46,13 +45,16 @@ public:
     void drawData(String str, int placement);
     void clearData(int placement);
     void deviceStatus(bool state);
-    static void pngDraw(PNGDRAW *pDraw);
-    static void pngDraw3(PNGDRAW *pDraw);
-    static void pngDrawLogo(PNGDRAW *pDraw);
     void logo(uint8_t* logo);
     void setFontSprite(void);
     void initSprite(void);
     void drawUnit(MODE actualMode);
+    static void pngDrawBLELogoStatus(PNGDRAW *pDraw);
+    static void pngDrawLogo(PNGDRAW *pDraw);
+    static void pngDrawMountainIcon(PNGDRAW *pDraw);
+    static void pngDrawUrbanIcon(PNGDRAW *pDraw);
+    static void pngDrawCustomIcon(PNGDRAW *pDraw);
+
     bool deviceConnected = false;
 
 private:
@@ -81,6 +83,7 @@ private:
     int16_t _rc;
 
     MODE _mode = MOUNTAIN;
+    uint8_t _inner_radius;
 };
 
 #endif

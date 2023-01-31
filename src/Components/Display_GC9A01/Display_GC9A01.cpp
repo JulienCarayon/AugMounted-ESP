@@ -123,16 +123,10 @@ void DisplayGC9A01::splashScreen(bool inOut, String str1, String str2)
     _display.fillScreen(_backgroundColor);
 }   
 
-void DisplayGC9A01::developmentMode(void)
-{
-    _display.drawLine(120, 110, 120, 130, TFT_WHITE);
-    _display.drawLine(110, 120, 130, 120, TFT_WHITE);
-}
-
 void DisplayGC9A01::deviceStatus(bool state)
 {
     if(state) {
-        _rc = _png.openFLASH((uint8_t*)ble_connected, sizeof(ble_connected), pngDraw);
+        _rc = _png.openFLASH((uint8_t*)ble_connected, sizeof(ble_connected), pngDrawBLELogoStatus);
         if (_rc == PNG_SUCCESS) {
             _display.startWrite();
             _rc = _png.decode(NULL, 0);
@@ -140,7 +134,7 @@ void DisplayGC9A01::deviceStatus(bool state)
             _png.close();
         }
     } else {
-        _rc = _png.openFLASH((uint8_t*)ble_disconnected, sizeof(ble_disconnected), pngDraw);
+        _rc = _png.openFLASH((uint8_t*)ble_disconnected, sizeof(ble_disconnected), pngDrawBLELogoStatus);
         if (_rc == PNG_SUCCESS) {
             _display.startWrite();
             _rc = _png.decode(NULL, 0);
@@ -152,26 +146,21 @@ void DisplayGC9A01::deviceStatus(bool state)
 
 void DisplayGC9A01::drawMenu(bool arcRoundedEnd, uint8_t thickness)
 {
-    _display.drawSmoothArc(_centerX, _centerY, _radius, _radius - (thickness), 0, 160, DISPLAY_MENU_COLOR, _backgroundColor, arcRoundedEnd);
+    _inner_radius = _radius - (thickness);
+    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 0, 160, DISPLAY_MENU_COLOR, _backgroundColor, arcRoundedEnd);
 }
 
 void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thickness, Move cursorSt)
 {
     Serial.println("DisplayGC9A01 drawDynamicMenu");
-
-    // uint16_t fg_color = random(0x10000);
-    uint32_t fg_color = 0xf6b036;
-
-    // _radius = arc outer radius, inner_radius = arc inner radius. Inclusive, so arc thickness = r-ir+1
-    uint8_t inner_radius = ((_radius) - (thickness / 2)) - 3; // Calculate inner radius (can be 0 for circle segment)
-    if (inOut)
-    {
-        // tft.drawSmoothArc(x, y, radius, inner_radius, start_angle, end_angle, fg_color, bg_color, arc _end);
+    _inner_radius = ((_radius) - (thickness / 2)) - 3; // Calculate inner radius (can be 0 for circle segment)
+    if (inOut) {
         //  fade in
         for (int i = 0; i < 20; i++)
         {
-            _display.drawSmoothArc(_centerX, _centerY, (inner_radius), inner_radius - i, 40, 140, fg_color, _backgroundColor, arcRoundedEnd);
+            _display.drawSmoothArc(_centerX, _centerY, _inner_radius, _inner_radius - i, 40, 140, DISPLAY_DYNAMIC_MENU_COLOR, _backgroundColor, arcRoundedEnd);
         }
+        drawDynamicMenuIcons(true);
      /*   
     _xpos = 100;
     _ypos = 70;
@@ -204,69 +193,80 @@ void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thic
     }
     else
     {
+        drawDynamicMenuIcons(false);
         // fade out
         for (int i = 0; i <= 20; i++)
         {
-            _display.drawSmoothArc(_centerX, _centerY, (inner_radius - 20) + i, inner_radius - 20, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+            _display.drawSmoothArc(_centerX, _centerY, (_inner_radius - 20) + i, _inner_radius - 20, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
         }
         cursorManagement(cursorSt, true);
     }
 }
 
-void DisplayGC9A01::batteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
+void DisplayGC9A01::drawDynamicMenuIcons(bool state)
 {
-    // Serial.println("DisplayGC9A01 batteryManagement");
-    uint8_t inner_radius = _radius - (thickness / 2);
+    if(state) {
+        _rc = _png.openFLASH((uint8_t*)urban, sizeof(urban), pngDrawUrbanIcon);
+        if (_rc == PNG_SUCCESS) {
+            _display.startWrite();
+            _rc = _png.decode(NULL, 0);
+            _display.endWrite();
+            _png.close();
+        }
 
-    if (batteryLevel > 110)
-        _arcBatteryColor = GREEN;
-    else if (batteryLevel > 65 && batteryLevel <= 109)
-        _arcBatteryColor = YELLOW;
-    else if (batteryLevel > 40 && batteryLevel <= 65)
-        _arcBatteryColor = ORANGE;
-    else
-        _arcBatteryColor = RED;
+        _rc = _png.openFLASH((uint8_t*)mountain, sizeof(mountain), pngDrawMountainIcon);
+        if (_rc == PNG_SUCCESS) {
+            _display.startWrite();
+            _rc = _png.decode(NULL, 0);
+            _display.endWrite();
+            _png.close();
+        }
 
-    // tft.drawSmoothArc(x, y, radius, inner_radius, start_angle, end_angle, fg_color, bg_color, arc_end);
-    // 160 because batteryLevel is mapped from 0->4096 to 1->159
-    _display.drawSmoothArc(_centerX, _centerY, _radius, inner_radius, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
-    _display.drawSmoothArc(_centerX, _centerY, _radius, inner_radius, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
-}
-
-void DisplayGC9A01::batteryManagement2(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
-{
-    uint8_t inner_radius = _radius - (thickness / 2);
-
-    if (batteryLevel > 110)
-        _arcBatteryColor = GREEN;
-    else if (batteryLevel > 65 && batteryLevel <= 109)
-        _arcBatteryColor = YELLOW;
-    else if (batteryLevel > 40 && batteryLevel <= 65)
-        _arcBatteryColor = ORANGE;
-    else
-        _arcBatteryColor = RED;
-
-    _display.drawSmoothArc(_centerX, _centerY, _radius - 12, inner_radius - 12, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
-    _display.drawSmoothArc(_centerX, _centerY, _radius - 12, inner_radius - 12, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
-}
-
-void DisplayGC9A01::test()
-{
-    Serial.println("DisplayGC9A01 batteryManagement");
-    uint8_t inner_radius = _radius - (40 / 2);
-
-    // tft.drawSmoothArc(x, y, radius, inner_radius, start_angle, end_angle, fg_color, bg_color, arc_end);
-    // 160 because batteryLevel is mapped from 0->4096 to 1->159
-    for (int i = 0; i < 8; i++)
-    {
-        _display.setRotation(i);
-        _display.drawSmoothArc(_centerX, _centerY, _radius, inner_radius, 0, 160, TFT_GREEN, _backgroundColor, false);
-        _display.drawSmoothArc(_centerX, _centerY, _radius, inner_radius, 200, 360, TFT_BLUE, _backgroundColor, false);
-        delay(3000);
-        //_display.drawSmoothArc(_centerX, _centerY, _radius, inner_radius, 200, 360, _backgroundColor, _backgroundColor, false);
-        _display.frameViewport(TFT_BLACK, 200);
-        delay(300);
+        _rc = _png.openFLASH((uint8_t*)custom, sizeof(custom), pngDrawCustomIcon);
+        if (_rc == PNG_SUCCESS) {
+            _display.startWrite();
+            _rc = _png.decode(NULL, 0);
+            _display.endWrite();
+            _png.close();
+        }
+    } else {
+        
     }
+}
+
+void DisplayGC9A01::deviceBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
+{
+    _inner_radius = _radius - (thickness / 2);
+
+    if (batteryLevel > 110)
+        _arcBatteryColor = GREEN;
+    else if (batteryLevel > 65 && batteryLevel <= 109)
+        _arcBatteryColor = YELLOW;
+    else if (batteryLevel > 40 && batteryLevel <= 65)
+        _arcBatteryColor = ORANGE;
+    else
+        _arcBatteryColor = RED;
+
+    // 160 because batteryLevel is mapped from 0->4096 to 1->159
+    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
+    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
+}
+
+void DisplayGC9A01::phoneBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
+{
+    _inner_radius = _radius - (thickness / 2);
+
+    if (batteryLevel > 110)
+        _arcBatteryColor = GREEN;
+    else if (batteryLevel > 65 && batteryLevel <= 109)
+        _arcBatteryColor = YELLOW;
+    else if (batteryLevel > 40 && batteryLevel <= 65)
+        _arcBatteryColor = ORANGE;
+    else
+        _arcBatteryColor = RED;
+
+    _display.drawSmoothArc(_centerX, _centerY, _radius - BATTERY_PHONE_ARC_OFFSET, _inner_radius - BATTERY_PHONE_ARC_OFFSET, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
+    _display.drawSmoothArc(_centerX, _centerY, _radius - BATTERY_PHONE_ARC_OFFSET, _inner_radius - BATTERY_PHONE_ARC_OFFSET, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
 }
 
 void DisplayGC9A01::drawDataString(String str, int32_t x, int32_t y)
@@ -506,7 +506,7 @@ void DisplayGC9A01::clearData(int placement)
 }
 
 
-void DisplayGC9A01::pngDraw(PNGDRAW *pDraw) {
+void DisplayGC9A01::pngDrawBLELogoStatus(PNGDRAW *pDraw) {
   uint16_t lineBuffer[MAX_IMAGE_WDITH];
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
   _display.pushImage(BLE_LOGO_POSX, BLE_LOGO_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
@@ -516,24 +516,19 @@ void DisplayGC9A01::pngDrawLogo(PNGDRAW *pDraw) {
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
   _display.pushImage(LOGO_MOUNTED_POSX, LOGO_MOUNTED_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }
-
-void DisplayGC9A01::pngDraw3(PNGDRAW *pDraw) {
+//MENU ICONS
+void DisplayGC9A01::pngDrawMountainIcon(PNGDRAW *pDraw) {
   uint16_t lineBuffer[MAX_IMAGE_WDITH];
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
-  _display.pushImage(100, 89 + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+  _display.pushImage(MOUTAIN_ICON_POSX, MOUTAIN_ICON_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }
-
-void DisplayGC9A01::logo(uint8_t* logo)
-{
-    int16_t rc = _png.openFLASH(logo, sizeof(logo), pngDraw);
-    Serial.println("logo function");
-    Serial.println(rc);
-    if (rc == PNG_SUCCESS) {
-        Serial.println("success");
-        _display.startWrite();
-        rc = _png.decode(NULL, 0);
-        _display.endWrite();
-        // png.close(); // not needed for memory->memory decode
-    }
-} 
-
+void DisplayGC9A01::pngDrawUrbanIcon(PNGDRAW *pDraw) {
+  uint16_t lineBuffer[MAX_IMAGE_WDITH];
+  _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
+  _display.pushImage(URBAN_ICON_POSX, URBAN_ICON_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+}
+void DisplayGC9A01::pngDrawCustomIcon(PNGDRAW *pDraw) {
+  uint16_t lineBuffer[MAX_IMAGE_WDITH];
+  _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
+  _display.pushImage(CUSTOM_ICON_POSX, CUSTOM_ICON_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+}

@@ -14,8 +14,9 @@
 
 #define DISPLAY_RESOLUTION 240
 #define DISPLAY_BACKGROUND_COLOR TFT_BLACK
-#define DISPLAY_MENU_COLOR TFT_DARKCYAN
-#define DISPLAY_DYNAMIC_MENU_COLOR 0x03E0
+#define DISPLAY_MENU_COLOR TFT_NAVY
+#define DISPLAY_DYNAMIC_MENU_COLOR TFT_NAVY
+#define ARC_ROUNDED_END false
 
 //LOGO MAX SIZE
 #define MAX_IMAGE_WDITH 60
@@ -23,6 +24,7 @@
 //MENU and BATTERY ARC CIRCLE THICKNESS
 #define MENU_THICKNESS 15
 #define BATTERY_THICKNESS 6
+#define BATTERY_PHONE_ARC_OFFSET 12
 
 //TEXT COLOR
 #define SPLASHSCREEN_TEXT_COLOR TFT_ORANGE
@@ -79,6 +81,15 @@
 //BLE 
 #define BLE_LOGO_POSX 100
 #define BLE_LOGO_POSY 190
+//MOUTAIN
+#define MOUTAIN_ICON_POSX 38
+#define MOUTAIN_ICON_POSY 160
+//URBAN
+#define URBAN_ICON_POSX 25
+#define URBAN_ICON_POSY 112
+//CUSTOM
+#define CUSTOM_ICON_POSX 38
+#define CUSTOM_ICON_POSY 66
 
 //DEBUG
 #define DEV_MODE
@@ -93,9 +104,10 @@
 #include "../include/fonts/splashscreenSubTitle.h"
 
 //LOGO
-#include "../include/logos_hex/urban.h"
 #include "../include/logos_hex/logo_mounted.h"
+#include "../include/logos_hex/urban.h"
 #include "../include/logos_hex/mountain.h"
+#include "../include/logos_hex/custom.h"
 #include "../include/logos_hex/ble_connected.h"
 #include "../include/logos_hex/ble_disconnected.h"
 
