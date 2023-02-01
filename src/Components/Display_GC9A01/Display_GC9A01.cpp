@@ -8,7 +8,7 @@ DisplayGC9A01::DisplayGC9A01(uint8_t resolution, uint64_t backgroundColor)
     _centerX = resolution / 2;
     _centerY = resolution / 2;
 }
-      
+
 void DisplayGC9A01::setFontSprite(void)
 {
     _splashScreenSprite.setFreeFont(&Syncopate_Bold_16);
@@ -35,6 +35,20 @@ void DisplayGC9A01::setFontSprite(void)
     _tertiaryDataUnitSprite.setTextColor(UNIT_TEXT_COLOR, TFT_BLACK, true);
     _tertiaryDataSprite.setTextDatum(MC_DATUM);
     _tertiaryDataUnitSprite.setTextDatum(MC_DATUM);
+
+    _menuTitleLeftSprite.setFreeFont(&Orbitron_Medium_12);
+    _menuTitleCenterSprite.setFreeFont(&Orbitron_Medium_12);
+    _menuTitleRightSprite.setFreeFont(&Orbitron_Medium_12); 
+    _menuTitleLeftSprite.setTextColor(MENU_TEXT_COLOR, TFT_BLACK, true);
+    _menuTitleCenterSprite.setTextColor(MENU_TEXT_COLOR, TFT_BLACK, true);
+    _menuTitleRightSprite.setTextColor(MENU_TEXT_COLOR, TFT_BLACK, true);
+    _menuTitleLeftSprite.setTextDatum(MC_DATUM);
+    _menuTitleCenterSprite.setTextDatum(MC_DATUM);
+    _menuTitleRightSprite.setTextDatum(MC_DATUM);
+
+    _currentTimeSprite.setFreeFont(&Orbitron_Bold_13);
+    _currentTimeSprite.setTextColor(CURRENT_TIME_TEXT_COLOR, TFT_BLACK, true);
+    _currentTimeSprite.setTextDatum(MC_DATUM);
 }
 
 void DisplayGC9A01::initSprite(void)
@@ -51,6 +65,12 @@ void DisplayGC9A01::initSprite(void)
     _tertiaryDataSprite.createSprite(TERTIARY_DATA_SPRITE_WIDTH,TERTIARY_DATA_SPRITE_HEIGHT);
     _tertiaryDataUnitSprite.createSprite(TERTIARY_DATA_UNIT_SPRITE_WIDTH, TERTIARY_DATA_UNIT_SPRITE_HEIGHT);
 
+    _menuTitleLeftSprite.createSprite(MENU_TITLE_SPRITE_WIDTH, MENU_TITLE_SPRITE_HEIGHT);
+    _menuTitleCenterSprite.createSprite(MENU_TITLE_SPRITE_WIDTH, MENU_TITLE_SPRITE_HEIGHT);
+    _menuTitleRightSprite.createSprite(MENU_TITLE_SPRITE_WIDTH, MENU_TITLE_SPRITE_HEIGHT);
+
+    _currentTimeSprite.createSprite(CURRENT_TIME_SPRITE_WIDTH, CURRENT_TIME_SPRITE_HEIGHT);
+
     setFontSprite();
 
     _splashScreenSprite.setPivot(SPLASH_SCREEN_SPRITE_POSX, SPLASH_SCREEN_SPRITE_POSY);
@@ -64,6 +84,12 @@ void DisplayGC9A01::initSprite(void)
 
     _tertiaryDataSprite.setPivot(TERTIARY_DATA_SPRITE_POSX, TERTIARY_DATA_SPRITE_POSY);
     _tertiaryDataUnitSprite.setPivot(TERTIARY_DATA_UNIT_SPRITE_POSX, TERTIARY_DATA_UNIT_SPRITE_POSY);
+
+    _menuTitleLeftSprite.setPivot(MENU_TITLE_SPRITE_POSX, MENU_TITLE_SPRITE_POSY);
+    _menuTitleCenterSprite.setPivot(MENU_TITLE_SPRITE_POSX, MENU_TITLE_SPRITE_POSY);
+    _menuTitleRightSprite.setPivot(MENU_TITLE_SPRITE_POSX, MENU_TITLE_SPRITE_POSY);
+
+    _currentTimeSprite.setPivot(CURRENT_TIME_SPRITE_POSX, CURRENT_TIME_SPRITE_POSY);
 }
 
 void DisplayGC9A01::init(void)
@@ -71,10 +97,13 @@ void DisplayGC9A01::init(void)
     _display.init();
     _display.setRotation(2);
     _display.setPivot(_radius, _radius);
-    _display.setFreeFont(&Roboto_Black_19);
     _display.setTextColor(TFT_WHITE, TFT_BLACK, true);
     initSprite();
-    splashScreen(true, "AUGMOUNTED", "LOADING ...");
+    #ifndef DEV_MODE
+    splashScreen(false, "AUGMOUNTED", "LOADING ...");
+    #else
+    _display.fillScreen(_backgroundColor);
+    #endif
     drawUnit(_mode);
     deviceStatus(deviceConnected);
     cursorManagement(MIDDLE, false);
@@ -152,7 +181,6 @@ void DisplayGC9A01::drawMenu(bool arcRoundedEnd, uint8_t thickness)
 
 void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thickness, Move cursorSt)
 {
-    Serial.println("DisplayGC9A01 drawDynamicMenu");
     _inner_radius = ((_radius) - (thickness / 2)) - 3; // Calculate inner radius (can be 0 for circle segment)
     if (inOut) {
         //  fade in
@@ -160,16 +188,13 @@ void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thic
         {
             _display.drawSmoothArc(_centerX, _centerY, _inner_radius, _inner_radius - i, 40, 140, DISPLAY_DYNAMIC_MENU_COLOR, _backgroundColor, arcRoundedEnd);
         }
-        drawDynamicMenuIcons(true);
+        //drawDynamicMenuIcons(true);
      /*   
     _xpos = 100;
     _ypos = 70;
     
     int16_t rc = _png.openFLASH((uint8_t*)urban, sizeof(urban), pngDraw);
-    Serial.println("logo function");
-    Serial.println(rc);
     if (rc == PNG_SUCCESS) {
-        Serial.println("succes");
         _display.startWrite();
         rc = _png.decode(NULL, 0);
         _display.endWrite();
@@ -180,10 +205,7 @@ void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thic
     _ypos = 40;
     
     rc = _png.openFLASH((uint8_t*)mountain, sizeof(mountain), pngDraw);
-    Serial.println("logo function");
-    Serial.println(rc);
     if (rc == PNG_SUCCESS) {
-        Serial.println("succes");
         _display.startWrite();
         rc = _png.decode(NULL, 0);
         _display.endWrite();
@@ -193,7 +215,7 @@ void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thic
     }
     else
     {
-        drawDynamicMenuIcons(false);
+        //drawDynamicMenuIcons(false);
         // fade out
         for (int i = 0; i <= 20; i++)
         {
@@ -277,7 +299,7 @@ void DisplayGC9A01::drawDataString(String str, int32_t x, int32_t y)
 void DisplayGC9A01::drawArcString(void)
 {
     //_display.drawString("CO3", 110, 110, 6);
-
+/*
     _display.setPivot(120, 120); // Set pivot to middle of screen
 
     _sprite.loadFont(AA_FONT_SMALL);
@@ -296,7 +318,6 @@ void DisplayGC9A01::drawArcString(void)
         if (angle == 250)
         {
             _sprite.loadFont(AA_FONT_SMALL);
-            //_sprite.drawChar(77,20,15);
             _sprite.drawString("M", 0, 0, 2);
         }
         else if (angle == 260)
@@ -308,63 +329,34 @@ void DisplayGC9A01::drawArcString(void)
 
         _sprite.pushRotated(angle, TFT_BLACK); // Plot rotated Sprite, black being transparent
     }
+    */
 }
 
-void DisplayGC9A01::drawMenuTitle(void)
+void DisplayGC9A01::drawMenuTitle(String leftTitle, String centerTitle, String rightTitle)
 {
+    _menuTitleLeftSprite.drawString(leftTitle,_menuTitleLeftSprite.width()/2, _menuTitleLeftSprite.height()/2);
+    _menuTitleLeftSprite.pushRotated(230, TFT_BLACK);
 
-    _sprite.deleteSprite();
-    _sprite.setColorDepth(8);      // Create an 8bpp Sprite of 60x30 pixels
-    _sprite.createSprite(70, 30);  // 8bpp requires 64 * 30 = 1920 bytes
-    _sprite.setPivot(35, _radius); // Set pivot relative to top left corner of Sprite
-    _sprite.loadFont(AA_FONT_SMALL);
-    _sprite.setTextColor(TFT_WHITE);    // Green text
-    _sprite.setTextDatum(MC_DATUM);     // Middle centre datum
-    _sprite.setTextSize(1);
-    _sprite.drawString("MENU", 35, 12); // Plot text, font 4, in Sprite at 30, 15
-    _sprite.pushRotated(270, TFT_BLACK);
+    _menuTitleCenterSprite.drawString(centerTitle,_menuTitleCenterSprite.width()/2, _menuTitleCenterSprite.height()/2);
+    _menuTitleCenterSprite.pushRotated(270, TFT_BLACK);
 
-    _sprite.deleteSprite();
-    _sprite.setColorDepth(8);
-    _sprite.createSprite(70, 30);
-    _sprite.setPivot(35, _radius);
-    _sprite.loadFont(AA_FONT_SMALL);
-    _sprite.setTextColor(TFT_WHITE);
-    _sprite.setTextDatum(MC_DATUM);    // Middle centre datum
-    _sprite.drawString("OFF", 35, 12); // Plot text, font 4, in Sprite at 30, 15
-    _sprite.pushRotated(230, TFT_BLACK);
-
-    _sprite.deleteSprite();
-    _sprite.setColorDepth(8);
-    _sprite.createSprite(70, 30);
-    _sprite.setPivot(35, _radius);
-    _sprite.loadFont(AA_FONT_SMALL);
-    _sprite.setTextColor(TFT_WHITE);
-    _sprite.setTextDatum(MC_DATUM);     // Middle centre datum
-    _sprite.drawString("CONF", 35, 12); // Plot text, font 4, in Sprite at 30, 15
-    _sprite.pushRotated(310, TFT_BLACK);
+    _menuTitleRightSprite.drawString(rightTitle,_menuTitleLeftSprite.width()/2, _menuTitleLeftSprite.height()/2);
+    _menuTitleRightSprite.pushRotated(310, TFT_BLACK);
 }
 
 void DisplayGC9A01::drawTime(String actual_time)
 {
     // time format : XX:YY:ZZ
     // we just need to keep hours (XX), and minutes (YY)
-
-    Serial.println("Time");
     clearData(3);
 
     String hours = actual_time.substring(0, 2);
     String minutes = actual_time.substring(3, 5);
 
-    _sprite.deleteSprite();
-    _sprite.loadFont(AA_FONT_SMALL);
-    _sprite.createSprite(40, 50);
-    _sprite.setPivot(-90, 25);
-    _sprite.setTextDatum(MC_DATUM);
-    _sprite.drawString(hours, _sprite.width() / 2, 15);
-    _sprite.drawLine(10, _sprite.height() / 2, _sprite.width() - 8, _sprite.height() / 2, TFT_DARKGREY);
-    _sprite.drawString(minutes, _sprite.width() / 2, _sprite.height() - 10);
-    _sprite.pushRotated(270, TFT_BLACK);
+    _currentTimeSprite.drawString(hours, _currentTimeSprite.width() / 2, 8);
+    _currentTimeSprite.drawLine(10, _currentTimeSprite.height() / 2, _currentTimeSprite.width() - 8, _currentTimeSprite.height() / 2, TFT_DARKGREY);
+    _currentTimeSprite.drawString(minutes, _currentTimeSprite.width() / 2, (_currentTimeSprite.height()/2)+8);
+    _currentTimeSprite.pushRotated(270, TFT_BLACK);
 }
 
 void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicMenu)
@@ -428,7 +420,7 @@ void DisplayGC9A01::drawData(String str, int placement)
 
     case 1:
         _secondaryDataSprite.drawString(str, _secondaryDataSprite.width()/2, _secondaryDataSprite.height()/2);
-        _secondaryDataSprite.pushRotated(270, TFT_TRANSPARENT);
+        _secondaryDataSprite.pushRotated(270, TFT_BLACK);
         break;
 
     case 2:
@@ -495,11 +487,11 @@ void DisplayGC9A01::clearData(int placement)
             break;
 
         case 3:
-            //_sprite.createSprite(40, 50);
-            //_sprite.setPivot(-90, 25); 
+            _currentTimeSprite.fillSprite(TFT_BLACK);
+            _currentTimeSprite.pushRotated(270, TFT_BLUE);
             break;
         case 4:
-           // _sprite.createSprite(120, 50);
+            // _sprite.createSprite(120, 50);
             //_sprite.setPivot(60, _sprite.height()/2);
             break;
     }

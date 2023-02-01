@@ -36,6 +36,8 @@
         uint8_t _phone_battery = 0;
         uint8_t _old_phone_battery = 0;
 
+        String arrayData[6];
+
 
         bool _dynamic_menu_set = false;
         bool _temp = HIGH;

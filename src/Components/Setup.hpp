@@ -22,14 +22,28 @@
 #define MAX_IMAGE_WDITH 60
 
 //MENU and BATTERY ARC CIRCLE THICKNESS
-#define MENU_THICKNESS 15
+#define ARC_ROUNDED false
+#define MENU_THICKNESS 18
 #define BATTERY_THICKNESS 6
-#define BATTERY_PHONE_ARC_OFFSET 12
+#define BATTERY_PHONE_ARC_OFFSET 14
+
+#define MENU_TITLE_SPRITE_WIDTH 70
+#define MENU_TITLE_SPRITE_HEIGHT 30
+
+#define MENU_TITLE_SPRITE_POSX 35
+#define MENU_TITLE_SPRITE_POSY 125
+
+//MENU TITLE POSITION
+#define MENU_TITLE_LEFT "OFF"       /*do not change position for v1.0*/
+#define MENU_TITLE_CENTER "MENU"    /*do not change position for v1.0*/
+#define MENU_TITLE_RIGHT "CONF"     /*do not change position for v1.0*/
 
 //TEXT COLOR
 #define SPLASHSCREEN_TEXT_COLOR TFT_ORANGE
 #define SPLASHSCREEN_SUBTITTLE_TEXT_COLOR TFT_GOLD
 #define UNIT_TEXT_COLOR TFT_GREEN
+#define MENU_TEXT_COLOR TFT_WHITE
+#define CURRENT_TIME_TEXT_COLOR TFT_GOLD
 
 //SPLASH_SCREEN TITLE
 #define SPLASH_SCREEN_SPRITE_WIDTH 180
@@ -54,12 +68,12 @@
 #define PRIMARY_DATA_UNIT_SPRITE_POSY 15
 
 //SECONDARY_DATA
-#define SECONDARY_DATA_SPRITE_WIDTH 50
+#define SECONDARY_DATA_SPRITE_WIDTH 65
 #define SECONDARY_DATA_SPRITE_HEIGHT 20
 #define SECONDARY_DATA_SPRITE_POSX 65
 #define SECONDARY_DATA_SPRITE_POSY -20
 //SECONDARY_UNIT
-#define SECONDARY_DATA_UNIT_SPRITE_WIDTH 50
+#define SECONDARY_DATA_UNIT_SPRITE_WIDTH 65
 #define SECONDARY_DATA_UNIT_SPRITE_HEIGHT 15
 #define SECONDARY_DATA_UNIT_SPRITE_POSX 65
 #define SECONDARY_DATA_UNIT_SPRITE_POSY -50
@@ -74,6 +88,12 @@
 #define TERTIARY_DATA_UNIT_SPRITE_HEIGHT 15
 #define TERTIARY_DATA_UNIT_SPRITE_POSX -15
 #define TERTIARY_DATA_UNIT_SPRITE_POSY -50
+
+//CURRENT TIME
+#define CURRENT_TIME_SPRITE_WIDTH 30
+#define CURRENT_TIME_SPRITE_HEIGHT 40
+#define CURRENT_TIME_SPRITE_POSX -90
+#define CURRENT_TIME_SPRITE_POSY 20
 
 //LOGOS POSITION
 #define LOGO_MOUNTED_POSX 50
@@ -96,12 +116,13 @@
 #undef SHOW_BLE_DATA
 
 //FONT
-#include "../include/fonts/font.h"
 #include "../include/fonts/numberFont.h"
 #include "../include/fonts/unitFont.h"
 #include "../include/fonts/secondaryDataFont.h"
 #include "../include/fonts/splashscreenTitle.h"
 #include "../include/fonts/splashscreenSubTitle.h"
+#include "../include/fonts/menuTitleFont.h"
+#include "../include/fonts/currentTimeFont.h"
 
 //LOGO
 #include "../include/logos_hex/logo_mounted.h"

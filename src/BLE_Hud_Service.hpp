@@ -16,15 +16,11 @@ class BLE_Hud_Service
 {
 public:
     BLE_Hud_Service();
-    //BLE_Hud_Service(uint8_t reso, uint64_t col);
     void initserviceUUID(void);
     void createService(void);
-    std::string* hudconnected(uint8_t battery_level);
     Data hudconnected2(uint8_t battery_level);
     bool deviceDisconnected;
-    String new_data[6];
-    std::string new_data2[6];
-    Data new_data3;
+    Data new_data;
 
 private:
     BLEServer *pServer;
@@ -51,12 +47,6 @@ private:
     std::string _get_gps;
     std::string _get_phone_battery;
     std::string _get_local_temperature;
-
-    String _current_speed;
-    String _current_altitude;
-    String _local_temperature;
-    String _current_time;
-    String _phone_battery;
 
     char _batteryLevel[8];
     char _old_batteryLevel[8] = "100";

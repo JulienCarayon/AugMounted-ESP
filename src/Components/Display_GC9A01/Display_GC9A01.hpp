@@ -38,7 +38,7 @@ public:
     void deviceBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
     void phoneBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
     void drawDataString(String str, int32_t x, int32_t y);
-    void drawMenuTitle(void);
+    void drawMenuTitle(String leftTitle, String centerTitle, String rightTitle);
     void drawArcString(void);
     void drawTime(String actual_time);
     void cursorManagement(Move current_state_menu, bool afterDynamicMenu);
@@ -73,6 +73,12 @@ private:
     TFT_eSprite _primaryDataUnitSprite = TFT_eSprite(&_display);
     TFT_eSprite _secondaryDataUnitSprite = TFT_eSprite(&_display);
     TFT_eSprite _tertiaryDataUnitSprite = TFT_eSprite(&_display);
+
+    TFT_eSprite _menuTitleLeftSprite = TFT_eSprite(&_display);
+    TFT_eSprite _menuTitleCenterSprite = TFT_eSprite(&_display);
+    TFT_eSprite _menuTitleRightSprite = TFT_eSprite(&_display);
+
+    TFT_eSprite _currentTimeSprite = TFT_eSprite(&_display);
 
     uint8_t _centerX;
     uint8_t _centerY;

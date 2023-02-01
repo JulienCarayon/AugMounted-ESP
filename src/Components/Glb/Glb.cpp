@@ -17,7 +17,8 @@ void Glb::begin(void)
 
   init();
   drawMenu(false, MENU_THICKNESS);
-  drawMenuTitle();
+  drawMenuTitle("OFF", "MENU", "CONF");
+  //drawMenuTitle("OFF", "MENU", "CONF");
 }
 const unsigned char data [6] = {urban[1442] };
 
@@ -39,7 +40,7 @@ void Glb::rotary_loop(Move cursor, bool sw)
   }
   if (_sw && _cursoSt == LEFT) {
     Serial.println("-> Turn OFF system");
-    splashScreen(false, "AUGMOUNTED", "GOOD BYE !");
+    //splashScreen(false, "AUGMOUNTED", "GOOD BYE !");
   }
   if (_sw && _cursoSt == RIGHT) {
     Serial.println("-> CONFIG");
@@ -148,20 +149,24 @@ void Glb::updateData(Data dt)
       deviceStatus(false);
       deviceConnected = false;
     }
-  }
+  } 
   if(dt._get_speed != _old_data._get_speed) {
+    //arrayData[0] = convertDataToString(dt._get_speed);
     drawData(convertDataToString(dt._get_speed), 0);
     _old_data._get_speed = dt._get_speed;
   }
   if(dt._get_altitude != _old_data._get_altitude) {
+    arrayData[1] = convertDataToString(dt._get_altitude);
     drawData(convertDataToString(dt._get_altitude), 1);
     _old_data._get_altitude = dt._get_altitude;
   }
   if(dt._get_local_temperature != _old_data._get_local_temperature) {
+    //arrayData[2] = convertDataToString(dt._get_local_temperature);
     drawData(convertDataToString(dt._get_local_temperature), 2);
     _old_data._get_local_temperature = dt._get_local_temperature;
   }
   if(dt._get_time != _old_data._get_time) {
+    //arrayData[3] = convertDataToString(dt._get_time);
     drawTime(convertDataToString(dt._get_time));
     _old_data._get_time = dt._get_time;
   }
@@ -169,6 +174,23 @@ void Glb::updateData(Data dt)
     get_battery_level(false, convertDataToInt(dt._get_phone_battery));
     _old_data._get_phone_battery = dt._get_phone_battery;
   }
+
+/*   
+  Serial.println("----------------------------------------------------------------------");
+  Serial.print("data 1 : ");
+  Serial.println( convertDataToString(dt._get_speed));
+  Serial.print("data 2 : ");
+  Serial.println( convertDataToString(dt._device_connected) );
+  Serial.print("data 3 : ");
+  Serial.println( convertDataToString(dt._get_altitude) );
+  Serial.print("data 4 : ");
+  Serial.println("GPS");
+  //Serial.println( convertDataToString(dt._get_gps));
+  Serial.print("data 5 : ");
+  Serial.println( convertDataToString(dt._get_local_temperature));
+  Serial.print("data 6 : ");
+  Serial.println(convertDataToString(dt._get_phone_battery)); 
+*/
 }
 
 String Glb::convertDataToString(std::string data) {
