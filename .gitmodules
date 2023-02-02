@@ -1,0 +1,3 @@
+[submodule ".pio/libdeps/denky32/Ai-Esp32-Rotary-Encoder"]
+	path = .pio/libdeps/denky32/Ai-Esp32-Rotary-Encoder
+	url = https://github.com/DorianFournier/ai-esp32-rotary-encoder
