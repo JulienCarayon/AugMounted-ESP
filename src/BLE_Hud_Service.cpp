@@ -160,15 +160,9 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
         // Hard version
         pCharacteristicHw->setValue("V1.1.3");
         // State battery
-        pCharacteristicBattery->setValue("5");
-        #ifdef DEV_MODE
-        //dtostrf(random(1, 100), 1, 2, _batteryLevel);
-        #else
-        //dtostrf(battery_level, 1, 2, _batteryLevel);
-        #endif
-        
-        //sscanf(battery_level, "%d", &_bL);
-        //sscanf(_old_batteryLevel, "%d", &_old_bL);
+        dtostrf(battery_level, 1, 2, _batteryLevel);
+        pCharacteristicBattery->setValue(_batteryLevel);
+    
 /*
         if(battery_level < _old_bL) {
             pCharacteristicBattery->setValue(_batteryLevel);

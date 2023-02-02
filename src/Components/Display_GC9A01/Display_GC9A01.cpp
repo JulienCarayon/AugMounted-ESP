@@ -104,7 +104,7 @@ void DisplayGC9A01::init(void)
     #else
     _display.fillScreen(_backgroundColor);
     #endif
-    drawUnit(_mode);
+    drawUnit(_current_mode);
     deviceStatus(deviceConnected);
     cursorManagement(MIDDLE, false, false);
 }
@@ -191,6 +191,7 @@ void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thic
                 _display.drawSmoothArc(_centerX, _centerY, _inner_radius, _inner_radius - i, 40, 140, DISPLAY_DYNAMIC_MENU_COLOR, _backgroundColor, arcRoundedEnd);
         }
         drawDynamicMenuIcons(true);
+        cursorManagement(cursorSt, false, true);
     }
     else
     {
@@ -250,9 +251,9 @@ void DisplayGC9A01::drawMenuTitle(String leftTitle, String centerTitle, String r
 
 void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicMenu, bool menuDynamic)
 {
-    // position[0] : LEFT      30 -70
-    // position[1] : MIDDLE    70 - 110
-    // position[2] : RIGHT     110 - 150
+    // position[0] : LEFT
+    // position[1] : MIDDLE
+    // position[2] : RIGHT
     const uint8_t position[] = {30, 70, 110};
     const uint8_t position_dy[] = {40, 74, 108};
     static Move old_value = MIDDLE;
@@ -263,22 +264,25 @@ void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicM
     if(!menuDynamic) {
         if (afterDynamicMenu)
         {
-            _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[1], position[1] + size, CURSOR_COLOR, _backgroundColor, false);
+            _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[0], position[2]+ size, _backgroundColor, _backgroundColor, false);
+            _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[0], position_dy[2]+size_dyn, _backgroundColor, _backgroundColor, false);
+            _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[1], position[1] + size, CURSOR_COLOR, _backgroundColor, false);
+            Serial.println("afterDynamicMenu");
+            drawUnit(_current_mode);
             return;
         }
+
         if (current_state_menu == MIDDLE)
         {
             for (int i = 0; i < size; i++)
             {
                 if (old_value == LEFT)
                 {
-                    Serial.println("left");
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value], position[old_value] + i, TFT_BLACK, _backgroundColor, false);
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + i, position[old_value] + size + i, CURSOR_COLOR, _backgroundColor, false);
                 }
                 else if(old_value == RIGHT)
                 {
-                    Serial.println("right");
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + size - i, position[old_value] + size, TFT_BLACK, _backgroundColor, false);
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] - i, position[old_value] + size - i, CURSOR_COLOR, _backgroundColor, false);
                 }
@@ -317,10 +321,14 @@ void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicM
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy], position_dy[old_value_dy] + i, TFT_BLACK, _backgroundColor, false);
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] + i, position_dy[old_value_dy] + size_dyn + i, CURSOR_COLOR_MENU_DYN, _backgroundColor, false);
                 }
-                else
+                else if(old_value_dy == RIGHT)
                 {
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] + size_dyn - i, position_dy[old_value_dy] + size_dyn, TFT_BLACK, _backgroundColor, false);
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] - i, position_dy[old_value_dy] + size_dyn - i, CURSOR_COLOR_MENU_DYN, _backgroundColor, false);
+                }
+                else 
+                {
+                   _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position[old_value_dy], position[old_value_dy] + size_dyn, CURSOR_COLOR, _backgroundColor, false);
                 }
             }
         }
@@ -367,7 +375,9 @@ void DisplayGC9A01::drawData(String str, int placement)
 }
 
 void DisplayGC9A01::drawUnit(MODE actualMode)
-{
+{   
+    clearUnit();
+
     drawData("--", 0);
     drawData("--", 1);
     drawData("--", 2);
@@ -379,28 +389,40 @@ void DisplayGC9A01::drawUnit(MODE actualMode)
         _secondaryDataUnitSprite.drawString("M", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
         _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _tertiaryDataUnitSprite.drawString("C",_tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
+        _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
         _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
     }
     else if(actualMode == URBAN) {
-        _primaryDataUnitSprite.drawString("GPS", 0, 0);
+        _primaryDataUnitSprite.drawString("GPS", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
         _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _secondaryDataUnitSprite.drawString("KM/H", 0, 0);
+        _secondaryDataUnitSprite.drawString("KM/H", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
         _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _tertiaryDataUnitSprite.drawString("C", 0, 0);
+        _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
         _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
     } else {
-        _primaryDataUnitSprite.drawString("VS", 0, 0);
+        _primaryDataUnitSprite.drawString("VS", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
         _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _secondaryDataUnitSprite.drawString("M", 0, 0);
+        _secondaryDataUnitSprite.drawString("M", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
         _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _tertiaryDataUnitSprite.drawString("C", 0, 0);
+        _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
         _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
     }
+}
+
+void DisplayGC9A01::clearUnit(void)
+{
+    _primaryDataUnitSprite.fillSprite(TFT_BLACK);
+    _primaryDataUnitSprite.pushRotated(270, TFT_BLUE);
+
+    _secondaryDataUnitSprite.fillSprite(TFT_BLACK);
+    _secondaryDataUnitSprite.pushRotated(270, TFT_BLUE);
+
+    _tertiaryDataUnitSprite.fillSprite(TFT_BLACK);
+    _tertiaryDataUnitSprite.pushRotated(270, TFT_BLUE);
 }
 
 void DisplayGC9A01::clearData(int placement)

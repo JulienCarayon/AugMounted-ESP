@@ -23,67 +23,35 @@ void Glb::begin(void)
 
   init();
   drawMenu(false, MENU_THICKNESS);
-  drawMenuTitle("OFF", "MENU", "CONF");
+  drawMenuTitle(MENU_TITLE_LEFT, MENU_TITLE_CENTER, MENU_TITLE_RIGHT);
 }
 
 void Glb::rotary_loop(Move cursor, bool encoderSwitch, bool menuDynamic)
 {
-  _encoderSwitch = encoderSwitch;
   if(!menuDynamic) {
     if (cursor != _old_cursoSt)
     {
-      #ifdef DEV_MODE
-      if (cursor == RIGHT)
-        Serial.println("                  RIGHT");
-      else if (cursor == LEFT)
-        Serial.println("LEFT");
-      else if (cursor == MIDDLE)
-        Serial.println("        MIDDLE");
-      #endif
+      Serial.println("rotary_loop2");
+      Serial.print("cursor : ");
+      Serial.println(cursor);
+      Serial.print("_old_cursoSt : ");
+      Serial.println(_old_cursoSt);
 
       cursorManagement(cursor, false, false);
-      
       _old_cursoSt = cursor;
-    }
 
-    if (encoderSwitch && _cursoSt == LEFT) {
-      Serial.println("-> Turn OFF system");
-      splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
-      #ifdef COMMIT
-      digitalWrite(SUICIDE_PIN, LOW);
-      #endif
-    }
-    if (encoderSwitch && _cursoSt == RIGHT) {
-      Serial.println("-> CONFIG");
+      Serial.print("_old_cursoStA : ");
+      Serial.println(_old_cursoSt);
     }
   }
   else
   {
     if (cursor != _old_cursoStDynMenu)
     {
-      #ifdef DEV_MODE
-      if (cursor == RIGHT)
-        Serial.println("                  RIGHT");
-      else if (cursor == LEFT)
-        Serial.println("LEFT");
-      else if (cursor == MIDDLE)
-        Serial.println("        MIDDLE");
-      #endif
-
       cursorManagement(cursor, false, true);
-    
       _old_cursoStDynMenu = cursor;
     }
   }
-/*  
-  if (_encoderSwitch && _cursoSt == LEFT) {
-    Serial.println("-> Turn OFF system");
-    splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
-  }
-  if (_encoderSwitch && _cursoSt == RIGHT) {
-    Serial.println("-> CONFIG");
-  } 
-*/
 }
 
 uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
@@ -93,12 +61,10 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
 
   if(system){
     _adc_read = analogRead(BATTERY_PIN);
-    //uint16_t div_voltage = (uint16_t)map(adc_read, 0, 4095, 0, 3300);
-    //uint16_t bat_voltage = (div_voltage * 1500) / 500;
-    //static uint16_t old_soc = 0;
-    //uint8_t soc = (uint8_t)map(bat_voltage, 0, 8400, 0, 100);
+    _div_voltage = (uint16_t)map(_adc_read, 0, 4095, 0, 3300);
+    _bat_voltage = _div_voltage * 2;
+    _soc = (uint16_t)map(_adc_read, 0, 4200, 1, 159);
 
-    _soc = (uint16_t)map(_adc_read, 0, 4095, 1, 159);
     // for voltage divider 
     if (_soc < (_old_soc - 3) || _soc > (_old_soc + 3))
     {
@@ -120,59 +86,87 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
 
 void Glb::dynamic_menu_management(void)
 {
+  
   _state = digitalRead(ROTARY_ENCODER_BUTTON_PIN);
-  if ((!_state) && (_state != _temp) && _cursoSt == MIDDLE)
+  if ((_selected_mode && _dynamic_menu_set)||((!_state) && (_state != _temp) && _cursoSt == MIDDLE))
   {
+    Serial.println("ok");
     _temp = digitalRead(ROTARY_ENCODER_BUTTON_PIN);
-    if (_dynamic_menu_set)
+    if (_dynamic_menu_set && _selected_mode)
     {
-      drawDynamicMenu(false, false, 40, _cursoSt);
+      drawDynamicMenu(false, false, 40, MIDDLE);
       _dynamic_menu_set = false;
     }
     else
     {
-      drawDynamicMenu(true, false, 40, _cursoSt);
+      drawDynamicMenu(true, false, 40, MIDDLE);
       _dynamic_menu_set = true;
+      _selected_mode = false;
     }
   }
   _temp = _state;
 
-  if (_cursoSt != MIDDLE && _rotaryEncoder.isEncoderButtonClicked())
-  {
+  //_cursoSt = _rotaryEncoder.encoderChangedState();
+
+  //check if button is clicked
+  if (_rotaryEncoder.isEncoderButtonClicked()) {
     _encoderSwitch = true;
+  }
+  else {
+    _encoderSwitch = false;
+  } 
+
+  if(!_dynamic_menu_set)
+  {
+    _cursoSt = _rotaryEncoder.encoderChangedState();
+
+    if (_encoderSwitch && _cursoSt == LEFT) {
+      Serial.println("-> Turn OFF system");
+      splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
+      #ifdef COMMIT
+      digitalWrite(SUICIDE_PIN, LOW);
+      #endif
+    }
+    if (_encoderSwitch && _cursoSt == RIGHT) {
+      Serial.println("-> CONFIG");
+    }
+    //rotaryloop algo
+    rotary_loop(_cursoSt, _encoderSwitch, _dynamic_menu_set);
   }
   else
   {
-    _encoderSwitch = false;
-  }
-
-  if (!_dynamic_menu_set)
-  {
     _cursoSt = _rotaryEncoder.encoderChangedState();
-    rotary_loop(_cursoSt, _encoderSwitch, false);
-  }
-  else {  //dynamic menu
-    _cursoStDynMenu = _rotaryEncoder.encoderChangedState();
 
-    if(_cursoStDynMenu == MIDDLE && _rotaryEncoder.isEncoderButtonClicked())
+    if(_cursoSt == MIDDLE && _encoderSwitch)
     {
       //ACTIVE URBAN MODE
       Serial.println("URBAN");
+      _current_mode = URBAN;
+      _selected_mode = true;
     }
-    else if (_cursoStDynMenu == LEFT && _rotaryEncoder.isEncoderButtonClicked())
+    else if (_cursoSt == LEFT && _encoderSwitch)
     {
       //ACTIVE MOUNTAIN MODE
       Serial.println("MOUNTAIN");
+      _current_mode = MOUNTAIN;
+      _selected_mode = true;
     }
-    else if (_cursoStDynMenu == RIGHT && _rotaryEncoder.isEncoderButtonClicked())
+    else if (_cursoSt == RIGHT && _encoderSwitch)
     {
       //ACTIVE CUSTOM MODE
       Serial.println("CUSTOM");
+      _current_mode = CUSTOM;
+      _selected_mode = true;
+    } 
+    else 
+    {
+      _selected_mode = false;
     }
-
-    rotary_loop(_cursoStDynMenu, _encoderSwitch, true);
+    //rotaryloop algo
+    //rotary_loop(_cursoStDynMenu, _encoderSwitch, _dynamic_menu_set);
   }
-  //rotary_loop(_cursoSt, _encoderSwitch, false);
+  //rotary_loop(_cursoSt, _encoderSwitch, _dynamic_menu_set);
+  rotary_loop(_cursoSt, _encoderSwitch, _dynamic_menu_set);
 }
 
 void IRAM_ATTR Glb::readEncoderISR()

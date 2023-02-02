@@ -11,7 +11,7 @@ file converter : https://notisrac.github.io/FileToCArray/ (select 'treat as bina
 
     //DEBUG
     #undef DEV_MODE
-    #undef COMMIT
+    #define COMMIT
 
     //HARDWARE PIN
     #define BATTERY_PIN 35                      //named "SP" on wroom32 dev board
@@ -123,7 +123,7 @@ file converter : https://notisrac.github.io/FileToCArray/ (select 'treat as bina
     #define LOGO_MOUNTED_POSY 97
     //BLE 
     #define BLE_LOGO_POSX 100
-    #define BLE_LOGO_POSY 190
+    #define BLE_LOGO_POSY 193
     //MOUTAIN
     #define MOUTAIN_ICON_POSX 38
     #define MOUTAIN_ICON_POSY 160

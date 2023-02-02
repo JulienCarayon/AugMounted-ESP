@@ -35,6 +35,7 @@
         void drawTime(String actual_time);
         void drawData(String str, int placement);
         void drawUnit(MODE actualMode);
+        void clearUnit(void);
         void clearData(int placement);
         
         void deviceBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
@@ -49,6 +50,7 @@
         static void pngDrawCustomIcon(PNGDRAW *pDraw);
 
         bool deviceConnected = false;
+        MODE _current_mode = MOUNTAIN;
 
     private:
         TFT_eSprite plane_s = TFT_eSprite(&_display);
@@ -79,7 +81,7 @@
         BATTERYCOLOR _arcBatteryColor;
         int16_t _rc;
 
-        MODE _mode = MOUNTAIN;
+        //MODE _current_mode = MOUNTAIN;
         uint8_t _inner_radius;
     };
 
