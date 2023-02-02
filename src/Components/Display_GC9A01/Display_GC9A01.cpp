@@ -272,13 +272,19 @@ void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicM
             {
                 if (old_value == LEFT)
                 {
+                    Serial.println("left");
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value], position[old_value] + i, TFT_BLACK, _backgroundColor, false);
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + i, position[old_value] + size + i, CURSOR_COLOR, _backgroundColor, false);
                 }
-                else
+                else if(old_value == RIGHT)
                 {
+                    Serial.println("right");
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + size - i, position[old_value] + size, TFT_BLACK, _backgroundColor, false);
                     _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] - i, position[old_value] + size - i, CURSOR_COLOR, _backgroundColor, false);
+                }
+                else 
+                {
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value], position[old_value] + size, CURSOR_COLOR, _backgroundColor, false);
                 }
             }
         }

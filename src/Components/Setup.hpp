@@ -18,9 +18,6 @@ file converter : https://notisrac.github.io/FileToCArray/ (select 'treat as bina
     #define ROTARY_ENCODER_STEPS 4
     #define SUICIDE_PIN 2
 
-    #define AA_FONT_SMALL "NotoSansBold15"
-    #define AA_FONT_LARGE "NotoSansBold36"
-
     #define DISPLAY_RESOLUTION 240
     #define DISPLAY_BACKGROUND_COLOR TFT_BLACK
     #define DISPLAY_MENU_COLOR TFT_NAVY

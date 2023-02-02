@@ -26,7 +26,6 @@ void Glb::begin(void)
 
 void Glb::rotary_loop(Move cursor, bool encoderSwitch, bool menuDynamic)
 {
-  //_cursoSt = cursor;
   _encoderSwitch = encoderSwitch;
   if(!menuDynamic) {
     if (cursor != _old_cursoSt)
@@ -48,6 +47,7 @@ void Glb::rotary_loop(Move cursor, bool encoderSwitch, bool menuDynamic)
     if (encoderSwitch && _cursoSt == LEFT) {
       Serial.println("-> Turn OFF system");
       splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
+      digitalWrite(SUICIDE_PIN, LOW);
     }
     if (encoderSwitch && _cursoSt == RIGHT) {
       Serial.println("-> CONFIG");
