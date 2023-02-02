@@ -100,13 +100,13 @@ void DisplayGC9A01::init(void)
     _display.setTextColor(TFT_WHITE, TFT_BLACK, true);
     initSprite();
     #ifndef DEV_MODE
-    splashScreen(false, "AUGMOUNTED", "LOADING ...");
+    splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "LOADING ...");
     #else
     _display.fillScreen(_backgroundColor);
     #endif
     drawUnit(_mode);
     deviceStatus(deviceConnected);
-    cursorManagement(MIDDLE, false);
+    cursorManagement(MIDDLE, false, false);
 }
 
 void DisplayGC9A01::splashScreen(bool inOut, String str1, String str2)
@@ -130,7 +130,7 @@ void DisplayGC9A01::splashScreen(bool inOut, String str1, String str2)
     for (int i = 0; i < 360; i++)
     {   
         _display.drawSmoothArc(_centerX, _centerY, _radius, _radius-5, 0, 1+i, TFT_GOLD, _backgroundColor, false);
-        if(i<10)
+        if(i<20)
             delay(5);
         else
             delay(1);
@@ -181,47 +181,27 @@ void DisplayGC9A01::drawMenu(bool arcRoundedEnd, uint8_t thickness)
 
 void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thickness, Move cursorSt)
 {
-    _inner_radius = ((_radius) - (thickness / 2)) - 3; // Calculate inner radius (can be 0 for circle segment)
+    _inner_radius = ((_radius) - (thickness / 2)) - 2; // Calculate inner radius (can be 0 for circle segment)
     if (inOut) {
         //  fade in
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i <= 30; i++)
         {
-            _display.drawSmoothArc(_centerX, _centerY, _inner_radius, _inner_radius - i, 40, 140, DISPLAY_DYNAMIC_MENU_COLOR, _backgroundColor, arcRoundedEnd);
+            _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, 70-i, 110+i, CURSOR_COLOR, _backgroundColor, arcRoundedEnd);
+            if(i<21)
+                _display.drawSmoothArc(_centerX, _centerY, _inner_radius, _inner_radius - i, 40, 140, DISPLAY_DYNAMIC_MENU_COLOR, _backgroundColor, arcRoundedEnd);
         }
-        //drawDynamicMenuIcons(true);
-     /*   
-    _xpos = 100;
-    _ypos = 70;
-    
-    int16_t rc = _png.openFLASH((uint8_t*)urban, sizeof(urban), pngDraw);
-    if (rc == PNG_SUCCESS) {
-        _display.startWrite();
-        rc = _png.decode(NULL, 0);
-        _display.endWrite();
-        _png.close(); // not needed for memory->memory decode
-    }
-
-    _xpos = 40;
-    _ypos = 40;
-    
-    rc = _png.openFLASH((uint8_t*)mountain, sizeof(mountain), pngDraw);
-    if (rc == PNG_SUCCESS) {
-        _display.startWrite();
-        rc = _png.decode(NULL, 0);
-        _display.endWrite();
-        _png.close(); // not needed for memory->memory decode
-    }
-    */
+        drawDynamicMenuIcons(true);
     }
     else
     {
-        //drawDynamicMenuIcons(false);
         // fade out
-        for (int i = 0; i <= 20; i++)
+        for (int i = 0; i <= 30; i++)
         {
-            _display.drawSmoothArc(_centerX, _centerY, (_inner_radius - 20) + i, _inner_radius - 20, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+            _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, 40+i, 140-i, CURSOR_COLOR, _backgroundColor, arcRoundedEnd);
+            if(i<21)
+                _display.drawSmoothArc(_centerX, _centerY, (_inner_radius - 20) + i, _inner_radius - 20, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
         }
-        cursorManagement(cursorSt, true);
+        cursorManagement(cursorSt, true, false);
     }
 }
 
@@ -256,82 +236,6 @@ void DisplayGC9A01::drawDynamicMenuIcons(bool state)
     }
 }
 
-void DisplayGC9A01::deviceBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
-{
-    _inner_radius = _radius - (thickness / 2);
-
-    if (batteryLevel > 110)
-        _arcBatteryColor = GREEN;
-    else if (batteryLevel > 65 && batteryLevel <= 109)
-        _arcBatteryColor = YELLOW;
-    else if (batteryLevel > 40 && batteryLevel <= 65)
-        _arcBatteryColor = ORANGE;
-    else
-        _arcBatteryColor = RED;
-
-    // 160 because batteryLevel is mapped from 0->4096 to 1->159
-    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
-    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
-}
-
-void DisplayGC9A01::phoneBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
-{
-    _inner_radius = _radius - (thickness / 2);
-
-    if (batteryLevel > 110)
-        _arcBatteryColor = GREEN;
-    else if (batteryLevel > 65 && batteryLevel <= 109)
-        _arcBatteryColor = YELLOW;
-    else if (batteryLevel > 40 && batteryLevel <= 65)
-        _arcBatteryColor = ORANGE;
-    else
-        _arcBatteryColor = RED;
-
-    _display.drawSmoothArc(_centerX, _centerY, _radius - BATTERY_PHONE_ARC_OFFSET, _inner_radius - BATTERY_PHONE_ARC_OFFSET, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
-    _display.drawSmoothArc(_centerX, _centerY, _radius - BATTERY_PHONE_ARC_OFFSET, _inner_radius - BATTERY_PHONE_ARC_OFFSET, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
-}
-
-void DisplayGC9A01::drawDataString(String str, int32_t x, int32_t y)
-{
-    _display.drawString(str, x, y, 4);
-}
-
-void DisplayGC9A01::drawArcString(void)
-{
-    //_display.drawString("CO3", 110, 110, 6);
-/*
-    _display.setPivot(120, 120); // Set pivot to middle of screen
-
-    _sprite.loadFont(AA_FONT_SMALL);
-    _sprite.createSprite(40, 40); // Create a new Sprite 40x30
-
-    _sprite.setPivot(20, 130); // Set Sprite pivot at 20,80
-
-    _sprite.setTextColor(TFT_WHITE); // Red text in Sprite
-    _sprite.setTextSize(2);
-    _sprite.setTextDatum(BR_DATUM); // Middle centre datum
-
-    for (int16_t angle = 250; angle <= 360; angle += 10)
-    {
-        _sprite.fillSprite(TFT_BLACK); // Clear the Sprite
-        // spr.drawNumber(num, 20, 15, 4);    // Plot number, in Sprite at 20,15 and with font 4
-        if (angle == 250)
-        {
-            _sprite.loadFont(AA_FONT_SMALL);
-            _sprite.drawString("M", 0, 0, 2);
-        }
-        else if (angle == 260)
-            _sprite.drawChar(69, 20, 15);
-        else if (angle == 270)
-            _sprite.drawChar(78, 20, 15);
-        else if (angle == 280)
-            _sprite.drawChar(85, 20, 15);
-
-        _sprite.pushRotated(angle, TFT_BLACK); // Plot rotated Sprite, black being transparent
-    }
-    */
-}
-
 void DisplayGC9A01::drawMenuTitle(String leftTitle, String centerTitle, String rightTitle)
 {
     _menuTitleLeftSprite.drawString(leftTitle,_menuTitleLeftSprite.width()/2, _menuTitleLeftSprite.height()/2);
@@ -344,68 +248,94 @@ void DisplayGC9A01::drawMenuTitle(String leftTitle, String centerTitle, String r
     _menuTitleRightSprite.pushRotated(310, TFT_BLACK);
 }
 
-void DisplayGC9A01::drawTime(String actual_time)
-{
-    // time format : XX:YY:ZZ
-    // we just need to keep hours (XX), and minutes (YY)
-    clearData(3);
-
-    String hours = actual_time.substring(0, 2);
-    String minutes = actual_time.substring(3, 5);
-
-    _currentTimeSprite.drawString(hours, _currentTimeSprite.width() / 2, 8);
-    _currentTimeSprite.drawLine(10, _currentTimeSprite.height() / 2, _currentTimeSprite.width() - 8, _currentTimeSprite.height() / 2, TFT_DARKGREY);
-    _currentTimeSprite.drawString(minutes, _currentTimeSprite.width() / 2, (_currentTimeSprite.height()/2)+8);
-    _currentTimeSprite.pushRotated(270, TFT_BLACK);
-}
-
-void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicMenu)
+void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicMenu, bool menuDynamic)
 {
     // position[0] : LEFT      30 -70
     // position[1] : MIDDLE    70 - 110
     // position[2] : RIGHT     110 - 150
     const uint8_t position[] = {30, 70, 110};
+    const uint8_t position_dy[] = {40, 74, 108};
     static Move old_value = MIDDLE;
+    static Move old_value_dy = MIDDLE;
     const int size = 40;
+    const int size_dyn = 34;
 
-    if (afterDynamicMenu)
-    {
-        _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[1], position[1] + size, TFT_RED, _backgroundColor, false);
-        return;
-    }
-    if (current_state_menu == MIDDLE)
-    {
-        for (int i = 0; i < size; i++)
+    if(!menuDynamic) {
+        if (afterDynamicMenu)
         {
-            if (old_value == LEFT)
+            _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[1], position[1] + size, CURSOR_COLOR, _backgroundColor, false);
+            return;
+        }
+        if (current_state_menu == MIDDLE)
+        {
+            for (int i = 0; i < size; i++)
             {
-                _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value], position[old_value] + i, TFT_BLACK, _backgroundColor, false);
-                _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value] + i, position[old_value] + size + i, TFT_RED, _backgroundColor, false);
+                if (old_value == LEFT)
+                {
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value], position[old_value] + i, TFT_BLACK, _backgroundColor, false);
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + i, position[old_value] + size + i, CURSOR_COLOR, _backgroundColor, false);
+                }
+                else
+                {
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + size - i, position[old_value] + size, TFT_BLACK, _backgroundColor, false);
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] - i, position[old_value] + size - i, CURSOR_COLOR, _backgroundColor, false);
+                }
             }
-            else
+        }
+        else if (current_state_menu == LEFT)
+        {
+            for (int i = 0; i < size; i++)
             {
-                _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value] + size - i, position[old_value] + size, TFT_BLACK, _backgroundColor, false);
-                _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value] - i, position[old_value] + size - i, TFT_RED, _backgroundColor, false);
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + size - i, position[old_value] + size, TFT_BLACK, _backgroundColor, false);
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] - i, position[old_value] + size - i, CURSOR_COLOR, _backgroundColor, false);
             }
         }
-    }
-    else if (current_state_menu == LEFT)
-    {
-        for (int i = 0; i < size; i++)
+        else if (current_state_menu == RIGHT)
         {
-            _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value] + size - i, position[old_value] + size, TFT_BLACK, _backgroundColor, false);
-            _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value] - i, position[old_value] + size - i, TFT_RED, _backgroundColor, false);
+            for (int i = 0; i < size; i++)
+            {
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value], position[old_value] + i, TFT_BLACK, _backgroundColor, false);
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value] + i, position[old_value] + size + i, CURSOR_COLOR, _backgroundColor, false);
+            }
         }
+        old_value = current_state_menu;
     }
-    else if (current_state_menu == RIGHT)
+    else
     {
-        for (int i = 0; i < size; i++)
+        if (current_state_menu == MIDDLE)
         {
-            _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value], position[old_value] + i, TFT_BLACK, _backgroundColor, false);
-            _display.drawSmoothArc(_centerX, _centerY, 97, 95, position[old_value] + i, position[old_value] + size + i, TFT_RED, _backgroundColor, false);
+            for (int i = 0; i < size_dyn; i++)
+            {
+                if (old_value_dy == LEFT)
+                {
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy], position_dy[old_value_dy] + i, TFT_BLACK, _backgroundColor, false);
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] + i, position_dy[old_value_dy] + size_dyn + i, CURSOR_COLOR_MENU_DYN, _backgroundColor, false);
+                }
+                else
+                {
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] + size_dyn - i, position_dy[old_value_dy] + size_dyn, TFT_BLACK, _backgroundColor, false);
+                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] - i, position_dy[old_value_dy] + size_dyn - i, CURSOR_COLOR_MENU_DYN, _backgroundColor, false);
+                }
+            }
         }
+        else if (current_state_menu == LEFT)
+        {
+            for (int i = 0; i < size_dyn; i++)
+            {
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] + size_dyn - i, position_dy[old_value_dy] + size_dyn, TFT_BLACK, _backgroundColor, false);
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] - i, position_dy[old_value_dy] + size_dyn - i, CURSOR_COLOR_MENU_DYN, _backgroundColor, false);
+            }
+        }
+        else if (current_state_menu == RIGHT)
+        {
+            for (int i = 0; i < size_dyn; i++)
+            {
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy], position_dy[old_value_dy] + i, TFT_BLACK, _backgroundColor, false);
+                _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[old_value_dy] + i, position_dy[old_value_dy] + size_dyn + i, CURSOR_COLOR_MENU_DYN, _backgroundColor, false);
+            }
+        }
+        old_value_dy = current_state_menu;
     }
-    old_value = current_state_menu;
 }
 
 void DisplayGC9A01::drawData(String str, int placement)
@@ -490,14 +420,61 @@ void DisplayGC9A01::clearData(int placement)
             _currentTimeSprite.fillSprite(TFT_BLACK);
             _currentTimeSprite.pushRotated(270, TFT_BLUE);
             break;
-        case 4:
-            // _sprite.createSprite(120, 50);
-            //_sprite.setPivot(60, _sprite.height()/2);
-            break;
     }
 }
 
+void DisplayGC9A01::drawTime(String actual_time)
+{
+    // time format : XX:YY:ZZ
+    // we just need to keep hours (XX), and minutes (YY)
+    clearData(3);
 
+    String hours = actual_time.substring(0, 2);
+    String minutes = actual_time.substring(3, 5);
+
+    _currentTimeSprite.drawString(hours, _currentTimeSprite.width() / 2, 8);
+    _currentTimeSprite.drawLine(10, _currentTimeSprite.height() / 2, _currentTimeSprite.width() - 8, _currentTimeSprite.height() / 2, TFT_DARKGREY);
+    _currentTimeSprite.drawString(minutes, _currentTimeSprite.width() / 2, (_currentTimeSprite.height()/2)+8);
+    _currentTimeSprite.pushRotated(270, TFT_BLACK);
+}
+
+//Battery management
+void DisplayGC9A01::deviceBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
+{
+    _inner_radius = _radius - (thickness / 2);
+
+    if (batteryLevel > 110)
+        _arcBatteryColor = GREEN;
+    else if (batteryLevel > 65 && batteryLevel <= 109)
+        _arcBatteryColor = YELLOW;
+    else if (batteryLevel > 40 && batteryLevel <= 65)
+        _arcBatteryColor = ORANGE;
+    else
+        _arcBatteryColor = RED;
+
+    // 160 because batteryLevel is mapped from 0->4096 to 1->159
+    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
+    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
+}
+
+void DisplayGC9A01::phoneBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
+{
+    _inner_radius = _radius - (thickness / 2);
+
+    if (batteryLevel > 110)
+        _arcBatteryColor = GREEN;
+    else if (batteryLevel > 65 && batteryLevel <= 109)
+        _arcBatteryColor = YELLOW;
+    else if (batteryLevel > 40 && batteryLevel <= 65)
+        _arcBatteryColor = ORANGE;
+    else
+        _arcBatteryColor = RED;
+
+    _display.drawSmoothArc(_centerX, _centerY, _radius - BATTERY_PHONE_ARC_OFFSET, _inner_radius - BATTERY_PHONE_ARC_OFFSET, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
+    _display.drawSmoothArc(_centerX, _centerY, _radius - BATTERY_PHONE_ARC_OFFSET, _inner_radius - BATTERY_PHONE_ARC_OFFSET, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
+}
+
+//Icons
 void DisplayGC9A01::pngDrawBLELogoStatus(PNGDRAW *pDraw) {
   uint16_t lineBuffer[MAX_IMAGE_WDITH];
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
@@ -508,7 +485,6 @@ void DisplayGC9A01::pngDrawLogo(PNGDRAW *pDraw) {
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
   _display.pushImage(LOGO_MOUNTED_POSX, LOGO_MOUNTED_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }
-//MENU ICONS
 void DisplayGC9A01::pngDrawMountainIcon(PNGDRAW *pDraw) {
   uint16_t lineBuffer[MAX_IMAGE_WDITH];
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);

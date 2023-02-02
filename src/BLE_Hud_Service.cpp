@@ -160,7 +160,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
         // Hard version
         pCharacteristicHw->setValue("V1.1.3");
         // State battery
-        pCharacteristicBattery->setValue("4");
+        pCharacteristicBattery->setValue("5");
         #ifdef DEV_MODE
         //dtostrf(random(1, 100), 1, 2, _batteryLevel);
         #else
@@ -227,7 +227,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
         new_data._get_altitude = "--";
         new_data._get_speed = "--";
         new_data._get_local_temperature = "--";
-        new_data._get_time = "--";
+        new_data._get_time = "--:--";
     }
 
     return new_data;

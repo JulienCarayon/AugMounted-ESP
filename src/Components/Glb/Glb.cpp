@@ -11,6 +11,10 @@ Glb::Glb(uint8_t resolution, uint64_t backgroundColor, uint8_t encoderAPin, uint
 
 void Glb::begin(void)
 {
+  pinMode(ROTARY_ENCODER_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(SUICIDE_PIN, OUTPUT);
+  digitalWrite(SUICIDE_PIN, HIGH);
+
   _rotaryEncoder = AiEsp32RotaryEncoder(_encoderAPin, _encoderBPin, _encoderButtonPin, _encoderVccPin, _encoderSteps);
   _rotaryEncoder.begin();
   _rotaryEncoder.setup(readEncoderISR);
@@ -18,33 +22,64 @@ void Glb::begin(void)
   init();
   drawMenu(false, MENU_THICKNESS);
   drawMenuTitle("OFF", "MENU", "CONF");
-  //drawMenuTitle("OFF", "MENU", "CONF");
 }
-const unsigned char data [6] = {urban[1442] };
 
-void Glb::rotary_loop(Move cursor, bool sw)
+void Glb::rotary_loop(Move cursor, bool encoderSwitch, bool menuDynamic)
 {
-  _cursoSt = cursor;
-  _sw = sw;
-  if (_cursoSt != _old_cursoSt)
-  {
-    if (_cursoSt == RIGHT)
-      Serial.println("                  RIGHT");
-    else if (_cursoSt == LEFT)
-      Serial.println("LEFT");
-    else if (_cursoSt == MIDDLE)
-      Serial.println("        MIDDLE");
+  //_cursoSt = cursor;
+  _encoderSwitch = encoderSwitch;
+  if(!menuDynamic) {
+    if (cursor != _old_cursoSt)
+    {
+      #ifdef DEV_MODE
+      if (cursor == RIGHT)
+        Serial.println("                  RIGHT");
+      else if (cursor == LEFT)
+        Serial.println("LEFT");
+      else if (cursor == MIDDLE)
+        Serial.println("        MIDDLE");
+      #endif
 
-    cursorManagement(_cursoSt, false);
-    _old_cursoSt = _cursoSt;
+      cursorManagement(cursor, false, false);
+      
+      _old_cursoSt = cursor;
+    }
+
+    if (encoderSwitch && _cursoSt == LEFT) {
+      Serial.println("-> Turn OFF system");
+      splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
+    }
+    if (encoderSwitch && _cursoSt == RIGHT) {
+      Serial.println("-> CONFIG");
+    }
   }
-  if (_sw && _cursoSt == LEFT) {
+  else
+  {
+    if (cursor != _old_cursoStDynMenu)
+    {
+      #ifdef DEV_MODE
+      if (cursor == RIGHT)
+        Serial.println("                  RIGHT");
+      else if (cursor == LEFT)
+        Serial.println("LEFT");
+      else if (cursor == MIDDLE)
+        Serial.println("        MIDDLE");
+      #endif
+
+      cursorManagement(cursor, false, true);
+    
+      _old_cursoStDynMenu = cursor;
+    }
+  }
+/*  
+  if (_encoderSwitch && _cursoSt == LEFT) {
     Serial.println("-> Turn OFF system");
-    //splashScreen(false, "AUGMOUNTED", "GOOD BYE !");
+    splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
   }
-  if (_sw && _cursoSt == RIGHT) {
+  if (_encoderSwitch && _cursoSt == RIGHT) {
     Serial.println("-> CONFIG");
-  }
+  } 
+*/
 }
 
 uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
@@ -98,25 +133,44 @@ void Glb::dynamic_menu_management(void)
   }
   _temp = _state;
 
-  if (!_dynamic_menu_set)
-  {
-    _cursoSt = _rotaryEncoder.encoderChangedState();
-  }
-  else {  //dynamic menu
-
-  }
-
   if (_cursoSt != MIDDLE && _rotaryEncoder.isEncoderButtonClicked())
   {
-    _sw = true;
+    _encoderSwitch = true;
   }
   else
   {
-    _sw = false;
+    _encoderSwitch = false;
   }
 
-  rotary_loop(_cursoSt, _sw);
+  if (!_dynamic_menu_set)
+  {
+    _cursoSt = _rotaryEncoder.encoderChangedState();
+    rotary_loop(_cursoSt, _encoderSwitch, false);
+  }
+  else {  //dynamic menu
+    _cursoStDynMenu = _rotaryEncoder.encoderChangedState();
+
+    if(_cursoStDynMenu == MIDDLE && _rotaryEncoder.isEncoderButtonClicked())
+    {
+      //ACTIVE URBAN MODE
+      Serial.println("URBAN");
+    }
+    else if (_cursoStDynMenu == LEFT && _rotaryEncoder.isEncoderButtonClicked())
+    {
+      //ACTIVE MOUNTAIN MODE
+      Serial.println("MOUNTAIN");
+    }
+    else if (_cursoStDynMenu == RIGHT && _rotaryEncoder.isEncoderButtonClicked())
+    {
+      //ACTIVE CUSTOM MODE
+      Serial.println("CUSTOM");
+    }
+
+    rotary_loop(_cursoStDynMenu, _encoderSwitch, true);
+  }
+  //rotary_loop(_cursoSt, _encoderSwitch, false);
 }
+
 void IRAM_ATTR Glb::readEncoderISR()
 {
   _rotaryEncoder.readEncoder_ISR();
@@ -151,46 +205,25 @@ void Glb::updateData(Data dt)
     }
   } 
   if(dt._get_speed != _old_data._get_speed) {
-    //arrayData[0] = convertDataToString(dt._get_speed);
     drawData(convertDataToString(dt._get_speed), 0);
     _old_data._get_speed = dt._get_speed;
   }
   if(dt._get_altitude != _old_data._get_altitude) {
-    arrayData[1] = convertDataToString(dt._get_altitude);
     drawData(convertDataToString(dt._get_altitude), 1);
     _old_data._get_altitude = dt._get_altitude;
   }
   if(dt._get_local_temperature != _old_data._get_local_temperature) {
-    //arrayData[2] = convertDataToString(dt._get_local_temperature);
     drawData(convertDataToString(dt._get_local_temperature), 2);
     _old_data._get_local_temperature = dt._get_local_temperature;
   }
   if(dt._get_time != _old_data._get_time) {
-    //arrayData[3] = convertDataToString(dt._get_time);
     drawTime(convertDataToString(dt._get_time));
     _old_data._get_time = dt._get_time;
   }
   if(dt._get_phone_battery != _old_data._get_phone_battery) {
-    get_battery_level(false, convertDataToInt(dt._get_phone_battery));
+    get_battery_level(PHONE_BATTERY, convertDataToInt(dt._get_phone_battery));
     _old_data._get_phone_battery = dt._get_phone_battery;
   }
-
-/*   
-  Serial.println("----------------------------------------------------------------------");
-  Serial.print("data 1 : ");
-  Serial.println( convertDataToString(dt._get_speed));
-  Serial.print("data 2 : ");
-  Serial.println( convertDataToString(dt._device_connected) );
-  Serial.print("data 3 : ");
-  Serial.println( convertDataToString(dt._get_altitude) );
-  Serial.print("data 4 : ");
-  Serial.println("GPS");
-  //Serial.println( convertDataToString(dt._get_gps));
-  Serial.print("data 5 : ");
-  Serial.println( convertDataToString(dt._get_local_temperature));
-  Serial.print("data 6 : ");
-  Serial.println(convertDataToString(dt._get_phone_battery)); 
-*/
 }
 
 String Glb::convertDataToString(std::string data) {
@@ -204,4 +237,3 @@ String Glb::convertDataToString(std::string data) {
 uint8_t Glb::convertDataToInt(std::string data) { 
   return stoi(data);
 }
-
