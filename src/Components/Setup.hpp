@@ -9,6 +9,10 @@ file converter : https://notisrac.github.io/FileToCArray/ (select 'treat as bina
     #include <TFT_eSPI.h>
     #include <PNGdec.h>
 
+    //DEBUG
+    #undef DEV_MODE
+    #undef COMMIT
+
     //HARDWARE PIN
     #define BATTERY_PIN 35                      //named "SP" on wroom32 dev board
     #define ROTARY_ENCODER_BUTTON_PIN 15
@@ -16,7 +20,10 @@ file converter : https://notisrac.github.io/FileToCArray/ (select 'treat as bina
     #define ROTARY_ENCODER_B_PIN 21
     #define ROTARY_ENCODER_VCC_PIN 0 // 27 put -1 of Rotary encoder Vcc is connected directly to 3,3V; else you can use declared output pin for powering rotary encoder 
     #define ROTARY_ENCODER_STEPS 4
+    
+    #ifdef COMMIT
     #define SUICIDE_PIN 2
+    #endif
 
     #define DISPLAY_RESOLUTION 240
     #define DISPLAY_BACKGROUND_COLOR TFT_BLACK
@@ -130,9 +137,6 @@ file converter : https://notisrac.github.io/FileToCArray/ (select 'treat as bina
     //SELECT BATTERY (PHONE or SYSTEM)
     #define PHONE_BATTERY false
     #define SYSTEM_BATTERY true
-
-    //DEBUG
-    #undef DEV_MODE
 
     //FONT
     #include "../include/fonts/numberFont.h"

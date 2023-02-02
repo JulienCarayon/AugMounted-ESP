@@ -284,7 +284,7 @@ void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicM
                 }
                 else 
                 {
-                    _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value], position[old_value] + size, CURSOR_COLOR, _backgroundColor, false);
+                   _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[old_value], position[old_value] + size, CURSOR_COLOR, _backgroundColor, false);
                 }
             }
         }

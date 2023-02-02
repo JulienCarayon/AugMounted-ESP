@@ -12,8 +12,10 @@ Glb::Glb(uint8_t resolution, uint64_t backgroundColor, uint8_t encoderAPin, uint
 void Glb::begin(void)
 {
   pinMode(ROTARY_ENCODER_BUTTON_PIN, INPUT_PULLUP);
+  #ifdef COMMIT
   pinMode(SUICIDE_PIN, OUTPUT);
   digitalWrite(SUICIDE_PIN, HIGH);
+  #endif
 
   _rotaryEncoder = AiEsp32RotaryEncoder(_encoderAPin, _encoderBPin, _encoderButtonPin, _encoderVccPin, _encoderSteps);
   _rotaryEncoder.begin();
@@ -47,7 +49,9 @@ void Glb::rotary_loop(Move cursor, bool encoderSwitch, bool menuDynamic)
     if (encoderSwitch && _cursoSt == LEFT) {
       Serial.println("-> Turn OFF system");
       splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
+      #ifdef COMMIT
       digitalWrite(SUICIDE_PIN, LOW);
+      #endif
     }
     if (encoderSwitch && _cursoSt == RIGHT) {
       Serial.println("-> CONFIG");
