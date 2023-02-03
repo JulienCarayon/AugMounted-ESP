@@ -26,12 +26,13 @@ private:
     MODE _mode = URBAN;
 
     uint16_t _adc_read = 0;
-    uint8_t _soc = 0;
+    uint8_t _soc = 100;
     uint8_t _old_soc = 0;
     uint8_t _phone_battery = 0;
     uint8_t _old_phone_battery = 0;
     uint16_t _div_voltage = 0;
     uint16_t _bat_voltage = 0;
+    uint8_t _soc_percentage = 0;
 
     bool _dynamic_menu_set = false;
     bool _selected_mode = false;

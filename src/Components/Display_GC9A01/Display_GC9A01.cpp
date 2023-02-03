@@ -36,9 +36,9 @@ void DisplayGC9A01::setFontSprite(void)
     _tertiaryDataSprite.setTextDatum(MC_DATUM);
     _tertiaryDataUnitSprite.setTextDatum(MC_DATUM);
 
-    _menuTitleLeftSprite.setFreeFont(&Orbitron_Medium_12);
-    _menuTitleCenterSprite.setFreeFont(&Orbitron_Medium_12);
-    _menuTitleRightSprite.setFreeFont(&Orbitron_Medium_12); 
+    _menuTitleLeftSprite.setFreeFont(&Orbitron_Bold_13);
+    _menuTitleCenterSprite.setFreeFont(&Orbitron_Bold_13);
+    _menuTitleRightSprite.setFreeFont(&Orbitron_Bold_13); 
     _menuTitleLeftSprite.setTextColor(MENU_TEXT_COLOR, TFT_BLACK, true);
     _menuTitleCenterSprite.setTextColor(MENU_TEXT_COLOR, TFT_BLACK, true);
     _menuTitleRightSprite.setTextColor(MENU_TEXT_COLOR, TFT_BLACK, true);
@@ -46,7 +46,7 @@ void DisplayGC9A01::setFontSprite(void)
     _menuTitleCenterSprite.setTextDatum(MC_DATUM);
     _menuTitleRightSprite.setTextDatum(MC_DATUM);
 
-    _currentTimeSprite.setFreeFont(&Orbitron_Bold_13);
+    _currentTimeSprite.setFreeFont(&Orbitron_Medium_10);
     _currentTimeSprite.setTextColor(CURRENT_TIME_TEXT_COLOR, TFT_BLACK, true);
     _currentTimeSprite.setTextDatum(MC_DATUM);
 }
@@ -71,6 +71,8 @@ void DisplayGC9A01::initSprite(void)
 
     _currentTimeSprite.createSprite(CURRENT_TIME_SPRITE_WIDTH, CURRENT_TIME_SPRITE_HEIGHT);
 
+   // _actualModeIcon.createSprite(ICON_ACTUAL_MODE_SPRITE_WIDTH, ICON_ACTUAL_MODE_SPRITE_HEIGHT);
+
     setFontSprite();
 
     _splashScreenSprite.setPivot(SPLASH_SCREEN_SPRITE_POSX, SPLASH_SCREEN_SPRITE_POSY);
@@ -90,6 +92,8 @@ void DisplayGC9A01::initSprite(void)
     _menuTitleRightSprite.setPivot(MENU_TITLE_SPRITE_POSX, MENU_TITLE_SPRITE_POSY);
 
     _currentTimeSprite.setPivot(CURRENT_TIME_SPRITE_POSX, CURRENT_TIME_SPRITE_POSY);
+
+    _actualModeIcon.setPivot(ICON_ACTUAL_MODE_SPRITE_POSX, ICON_ACTUAL_MODE_SPRITE_POSY);
 }
 
 void DisplayGC9A01::init(void)
@@ -104,7 +108,8 @@ void DisplayGC9A01::init(void)
     #else
     _display.fillScreen(_backgroundColor);
     #endif
-    drawUnit(_current_mode);
+    drawUnit(_current_mode, false);
+    drawIconMode(_current_mode);
     deviceStatus(deviceConnected);
     cursorManagement(MIDDLE, false, false);
 }
@@ -176,12 +181,59 @@ void DisplayGC9A01::deviceStatus(bool state)
 void DisplayGC9A01::drawMenu(bool arcRoundedEnd, uint8_t thickness)
 {
     _inner_radius = _radius - (thickness);
+    #ifdef V2_PROTO
+    _display.drawSmoothArc(_centerX, _centerY, _radius-18, _radius-20, 1, 160, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
+    _display.fillRect(117,220, 3, 18, _arcBatteryColor);
+    _display.fillRect(83, 6, 3, 22, _arcBatteryColor);
+    #else   
     _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 0, 160, DISPLAY_MENU_COLOR, _backgroundColor, arcRoundedEnd);
+    #endif
 }
 
 void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thickness, Move cursorSt)
 {
-    _inner_radius = ((_radius) - (thickness / 2)) - 2; // Calculate inner radius (can be 0 for circle segment)
+    _inner_radius = ((_radius) - (thickness / 2)) - 2;
+    
+    #ifdef V2_PROTO
+    if (inOut) {
+        // fade out
+        for (int i = 0; i <= 30; i++)
+        {
+            _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, 70-i, 110+i, TEST_CURSOR, _backgroundColor, arcRoundedEnd);
+            if(i>1 && i<25){
+                _rad = _inner_radius - i;
+                _display.drawSmoothArc(_centerX, _centerY, _rad, _rad - 1, 40, 140, CURSOR_COLOR_MENU_DYN, _backgroundColor, arcRoundedEnd);
+                _display.drawSmoothArc(_centerX, _centerY, _rad, _rad - 2, 40, 140, CURSOR_COLOR_MENU_DYN, _backgroundColor, arcRoundedEnd);
+                _display.drawSmoothArc(_centerX, _centerY, _rad, _rad + 1, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+                _display.drawSmoothArc(_centerX, _centerY, _rad, _rad + 2, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+             }
+        }
+        _display.drawSmoothArc(_centerX, _centerY, _rad, _rad - 1, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+        _display.drawSmoothArc(_centerX, _centerY, _rad, _rad - 2, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+        drawDynamicMenuIcons(true);
+        cursorManagement(cursorSt, false, true);
+    }
+    else
+    {
+        cursorManagement(cursorSt, true, false);
+        _rad = 73;
+        // fade in
+        for (int i = 0; i <= 30; i++)
+        {
+            _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, 40+i, 140-i, _backgroundColor, _backgroundColor, arcRoundedEnd);
+            if(i>1 && i<25){
+                _rad += 1;
+                _display.drawSmoothArc(_centerX, _centerY, _rad+1, _rad, 40, 140, TEST_CURSOR, _backgroundColor, arcRoundedEnd);
+                _display.drawSmoothArc(_centerX, _centerY, _rad+2, _rad, 40, 140, TEST_CURSOR, _backgroundColor, arcRoundedEnd);
+                _display.drawSmoothArc(_centerX, _centerY, _rad-1, _rad, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+                _display.drawSmoothArc(_centerX, _centerY, _rad-2, _rad, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+            }
+        }
+        //_display.drawSmoothArc(_centerX, _centerY, _rad+1, _rad, 40, 140, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
+        _display.drawSmoothArc(_centerX, _centerY, _rad+1, _rad, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+        _display.drawSmoothArc(_centerX, _centerY, _rad+2, _rad, 40, 140, _backgroundColor, _backgroundColor, arcRoundedEnd);
+    }
+    #else
     if (inOut) {
         //  fade in
         for (int i = 0; i <= 30; i++)
@@ -204,12 +256,13 @@ void DisplayGC9A01::drawDynamicMenu(bool inOut, bool arcRoundedEnd, uint8_t thic
         }
         cursorManagement(cursorSt, true, false);
     }
+    #endif
 }
 
 void DisplayGC9A01::drawDynamicMenuIcons(bool state)
 {
     if(state) {
-        _rc = _png.openFLASH((uint8_t*)urban, sizeof(urban), pngDrawUrbanIcon);
+        _rc = _png.openFLASH((uint8_t*)urban, sizeof(urban), pngDrawUrbanIconMenu);
         if (_rc == PNG_SUCCESS) {
             _display.startWrite();
             _rc = _png.decode(NULL, 0);
@@ -217,7 +270,7 @@ void DisplayGC9A01::drawDynamicMenuIcons(bool state)
             _png.close();
         }
 
-        _rc = _png.openFLASH((uint8_t*)mountain, sizeof(mountain), pngDrawMountainIcon);
+        _rc = _png.openFLASH((uint8_t*)mountain, sizeof(mountain), pngDrawMountainIconMenu);
         if (_rc == PNG_SUCCESS) {
             _display.startWrite();
             _rc = _png.decode(NULL, 0);
@@ -225,15 +278,45 @@ void DisplayGC9A01::drawDynamicMenuIcons(bool state)
             _png.close();
         }
 
-        _rc = _png.openFLASH((uint8_t*)custom, sizeof(custom), pngDrawCustomIcon);
+        _rc = _png.openFLASH((uint8_t*)custom, sizeof(custom), pngDrawCustomIconMenu);
         if (_rc == PNG_SUCCESS) {
             _display.startWrite();
             _rc = _png.decode(NULL, 0);
             _display.endWrite();
             _png.close();
         }
-    } else {
-        
+    } 
+}
+
+void DisplayGC9A01::drawIconMode(MODE actualMode)
+{
+    _actualModeIcon.fillSprite(TFT_BLACK);
+    _actualModeIcon.pushSprite(ICON_ACTUAL_MODE_SPRITE_POSX,ICON_ACTUAL_MODE_SPRITE_POSY);
+    
+    if(actualMode == MOUNTAIN) {
+        _rc = _png.openFLASH((uint8_t*)mountain, sizeof(mountain), pngDrawMountainIconActualMode);
+        if (_rc == PNG_SUCCESS) {
+            _display.startWrite();
+            _rc = _png.decode(NULL, 0);
+            _display.endWrite();
+            _png.close();
+        }
+    }else if(actualMode == URBAN) {
+        _rc = _png.openFLASH((uint8_t*)urban, sizeof(urban), pngDrawUrbanIconActualMode);
+        if (_rc == PNG_SUCCESS) {
+            _display.startWrite();
+            _rc = _png.decode(NULL, 0);
+            _display.endWrite();
+            _png.close();
+        }
+    }else if(actualMode == CUSTOM) { 
+        _rc = _png.openFLASH((uint8_t*)custom, sizeof(custom), pngDrawCustomIconActualMode);
+        if (_rc == PNG_SUCCESS) {
+            _display.startWrite();
+            _rc = _png.decode(NULL, 0);
+            _display.endWrite();
+            _png.close();
+        }
     }
 }
 
@@ -267,8 +350,8 @@ void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicM
             _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[0], position[2]+ size, _backgroundColor, _backgroundColor, false);
             _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position_dy[0], position_dy[2]+size_dyn, _backgroundColor, _backgroundColor, false);
             _display.drawSmoothArc(_centerX, _centerY, CURSOR_POSITION_EXT, CURSOR_POSITION_INT, position[1], position[1] + size, CURSOR_COLOR, _backgroundColor, false);
-            Serial.println("afterDynamicMenu");
-            drawUnit(_current_mode);
+            drawUnit(_current_mode, false);
+            drawIconMode(_current_mode);
             return;
         }
 
@@ -312,6 +395,7 @@ void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicM
     }
     else
     {
+        drawUnit(_current_mode, true);
         if (current_state_menu == MIDDLE)
         {
             for (int i = 0; i < size_dyn; i++)
@@ -328,7 +412,7 @@ void DisplayGC9A01::cursorManagement(Move current_state_menu, bool afterDynamicM
                 }
                 else 
                 {
-                   _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position[old_value_dy], position[old_value_dy] + size_dyn, CURSOR_COLOR, _backgroundColor, false);
+                   _display.drawSmoothArc(_centerX, _centerY, CURSOR_MENU_DYN_POSITION_EXT, CURSOR_MENU_DYN_POSITION_INT, position[old_value_dy], position[old_value_dy] + size_dyn, CURSOR_COLOR_MENU_DYN, _backgroundColor, false);
                 }
             }
         }
@@ -374,42 +458,56 @@ void DisplayGC9A01::drawData(String str, int placement)
     }
 }
 
-void DisplayGC9A01::drawUnit(MODE actualMode)
+void DisplayGC9A01::drawUnit(MODE actualMode, bool menuDynamic)
 {   
     clearUnit();
 
-    drawData("--", 0);
-    drawData("--", 1);
-    drawData("--", 2);
+    if(menuDynamic)
+    { 
+        drawData("--", 0);
+        drawData("--", 1);
+        drawData("--", 2);
 
-    if(actualMode == MOUNTAIN){
-        _primaryDataUnitSprite.drawString("KM/H", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
+        _primaryDataUnitSprite.drawString("", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
         _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _secondaryDataUnitSprite.drawString("M", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
+        _secondaryDataUnitSprite.drawString("", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
         _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
+        _tertiaryDataUnitSprite.drawString("", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
         _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
     }
-    else if(actualMode == URBAN) {
-        _primaryDataUnitSprite.drawString("GPS", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
-        _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+    else 
+    {    
+        if(actualMode == MOUNTAIN){
+            _primaryDataUnitSprite.drawString("KM/H", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
+            _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _secondaryDataUnitSprite.drawString("KM/H", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
-        _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+            _secondaryDataUnitSprite.drawString("M", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
+            _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
-        _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
-    } else {
-        _primaryDataUnitSprite.drawString("VS", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
-        _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+            _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
+            _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+        }
+        else if(actualMode == URBAN) {
+            _primaryDataUnitSprite.drawString("GPS", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
+            _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _secondaryDataUnitSprite.drawString("M", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
-        _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+            _secondaryDataUnitSprite.drawString("KM/H", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
+            _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
 
-        _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
-        _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+            _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
+            _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+        } else {
+            _primaryDataUnitSprite.drawString("VS (m/s)", _primaryDataUnitSprite.width()/2, _primaryDataUnitSprite.height()/2);
+            _primaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+
+            _secondaryDataUnitSprite.drawString("M/S", _secondaryDataUnitSprite.width()/2, _secondaryDataUnitSprite.height()/2);
+            _secondaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+
+            _tertiaryDataUnitSprite.drawString("C", _tertiaryDataUnitSprite.width()/2, _tertiaryDataUnitSprite.height()/2);
+            _tertiaryDataUnitSprite.pushRotated(270, TFT_BLACK);
+        }
     }
 }
 
@@ -481,8 +579,8 @@ void DisplayGC9A01::deviceBatteryManagement(uint8_t batteryLevel, bool arcRounde
         _arcBatteryColor = RED;
 
     // 160 because batteryLevel is mapped from 0->4096 to 1->159
-    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
-    _display.drawSmoothArc(_centerX, _centerY, _radius, _inner_radius, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
+    _display.drawSmoothArc(_centerX, _centerY, _radius-3, _inner_radius-3, 200 + (160 - batteryLevel), 360, _arcBatteryColor, _backgroundColor, arcRoundedEnd);
+    _display.drawSmoothArc(_centerX, _centerY, _radius-3, _inner_radius-3, 200, 200 + (160 - batteryLevel), TFT_BLACK, _backgroundColor, arcRoundedEnd);
 }
 
 void DisplayGC9A01::phoneBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness)
@@ -513,18 +611,34 @@ void DisplayGC9A01::pngDrawLogo(PNGDRAW *pDraw) {
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
   _display.pushImage(LOGO_MOUNTED_POSX, LOGO_MOUNTED_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }
-void DisplayGC9A01::pngDrawMountainIcon(PNGDRAW *pDraw) {
+void DisplayGC9A01::pngDrawMountainIconMenu(PNGDRAW *pDraw) {
   uint16_t lineBuffer[MAX_IMAGE_WDITH];
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
   _display.pushImage(MOUTAIN_ICON_POSX, MOUTAIN_ICON_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }
-void DisplayGC9A01::pngDrawUrbanIcon(PNGDRAW *pDraw) {
+void DisplayGC9A01::pngDrawUrbanIconMenu(PNGDRAW *pDraw) {
   uint16_t lineBuffer[MAX_IMAGE_WDITH];
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
   _display.pushImage(URBAN_ICON_POSX, URBAN_ICON_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }
-void DisplayGC9A01::pngDrawCustomIcon(PNGDRAW *pDraw) {
+void DisplayGC9A01::pngDrawCustomIconMenu(PNGDRAW *pDraw) {
   uint16_t lineBuffer[MAX_IMAGE_WDITH];
   _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
   _display.pushImage(CUSTOM_ICON_POSX, CUSTOM_ICON_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+}
+
+void DisplayGC9A01::pngDrawMountainIconActualMode(PNGDRAW *pDraw) {
+  uint16_t lineBuffer[MAX_IMAGE_WDITH];
+  _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
+  _display.pushImage(MOUTAIN_ICON_ACTUAL_MODE_POSX, MOUTAIN_ICON_ACTUAL_MODE_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+}
+void DisplayGC9A01::pngDrawUrbanIconActualMode(PNGDRAW *pDraw) {
+  uint16_t lineBuffer[MAX_IMAGE_WDITH];
+  _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
+  _display.pushImage(URBAN_ICON_ACTUAL_MODE_POSX, URBAN_ICON_ACTUAL_MODE_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+}
+void DisplayGC9A01::pngDrawCustomIconActualMode(PNGDRAW *pDraw) {
+  uint16_t lineBuffer[MAX_IMAGE_WDITH];
+  _png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0x00000000);
+  _display.pushImage(CUSTOM_ICON_ACTUAL_MODE_POSX, CUSTOM_ICON_ACTUAL_MODE_POSY + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }

@@ -12,7 +12,7 @@ Glb::Glb(uint8_t resolution, uint64_t backgroundColor, uint8_t encoderAPin, uint
 void Glb::begin(void)
 {
   pinMode(ROTARY_ENCODER_BUTTON_PIN, INPUT_PULLUP);
-  #ifdef COMMIT
+  #ifdef WROVER_BOARD
   pinMode(SUICIDE_PIN, OUTPUT);
   digitalWrite(SUICIDE_PIN, HIGH);
   #endif
@@ -31,17 +31,8 @@ void Glb::rotary_loop(Move cursor, bool encoderSwitch, bool menuDynamic)
   if(!menuDynamic) {
     if (cursor != _old_cursoSt)
     {
-      Serial.println("rotary_loop2");
-      Serial.print("cursor : ");
-      Serial.println(cursor);
-      Serial.print("_old_cursoSt : ");
-      Serial.println(_old_cursoSt);
-
       cursorManagement(cursor, false, false);
       _old_cursoSt = cursor;
-
-      Serial.print("_old_cursoStA : ");
-      Serial.println(_old_cursoSt);
     }
   }
   else
@@ -58,16 +49,23 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
 {
   //if system == true -> map voltage divider
   //else -> map phone battery
-
   if(system){
     _adc_read = analogRead(BATTERY_PIN);
+    #ifdef WROVER_BOARD
     _div_voltage = (uint16_t)map(_adc_read, 0, 4095, 0, 3300);
     _bat_voltage = _div_voltage * 2;
-    _soc = (uint16_t)map(_adc_read, 0, 4200, 1, 159);
+    _soc = (uint16_t)map(_bat_voltage, 3000, 4200, 1, 159);
+    _soc_percentage = (uint8_t)map(_soc, 1, 159, 0, 100);
+    #else
+    _soc = (uint16_t)map(_adc_read, 0, 4095, 1, 159);
+    _soc_percentage = (uint8_t)map(_soc, 1, 159, 0, 100);
+    #endif
 
     // for voltage divider 
-    if (_soc < (_old_soc - 3) || _soc > (_old_soc + 3))
+    if (_soc < (_old_soc - 20) || _soc > (_old_soc + 20))
     {
+      Serial.println(_bat_voltage);
+      Serial.println(_soc);
       deviceBatteryManagement(_soc, ARC_ROUNDED_END, BATTERY_THICKNESS);
       _old_soc = _soc;
     }
@@ -81,12 +79,11 @@ uint8_t Glb::get_battery_level(bool system, uint16_t phone_battery)
       _old_phone_battery = _phone_battery;
     }
   }  
-  return _soc;
+  return _soc_percentage;
 }
 
 void Glb::dynamic_menu_management(void)
 {
-  
   _state = digitalRead(ROTARY_ENCODER_BUTTON_PIN);
   if ((_selected_mode && _dynamic_menu_set)||((!_state) && (_state != _temp) && _cursoSt == MIDDLE))
   {
@@ -123,7 +120,7 @@ void Glb::dynamic_menu_management(void)
     if (_encoderSwitch && _cursoSt == LEFT) {
       Serial.println("-> Turn OFF system");
       splashScreen(SPLASH_SCREEN_BLINKING, "AUGMOUNTED", "GOOD BYE !");
-      #ifdef COMMIT
+      #ifdef WROVER_BOARD
       digitalWrite(SUICIDE_PIN, LOW);
       #endif
     }
@@ -131,7 +128,7 @@ void Glb::dynamic_menu_management(void)
       Serial.println("-> CONFIG");
     }
     //rotaryloop algo
-    rotary_loop(_cursoSt, _encoderSwitch, _dynamic_menu_set);
+    //rotary_loop(_cursoSt, _encoderSwitch, _dynamic_menu_set);
   }
   else
   {
@@ -165,6 +162,27 @@ void Glb::dynamic_menu_management(void)
     //rotaryloop algo
     //rotary_loop(_cursoStDynMenu, _encoderSwitch, _dynamic_menu_set);
   }
+
+  /* _state = digitalRead(ROTARY_ENCODER_BUTTON_PIN);
+  if ((_selected_mode && _dynamic_menu_set)||((!_state) && (_state != _temp) && _cursoSt == MIDDLE))
+  {
+    Serial.println("ok");
+    
+    if (_dynamic_menu_set && _selected_mode)
+    {
+      drawDynamicMenu(false, false, 40, MIDDLE);
+      _dynamic_menu_set = false;
+    }
+    else
+    {
+      drawDynamicMenu(true, false, 40, MIDDLE);
+      _dynamic_menu_set = true;
+      _selected_mode = false;
+    }
+    _temp = digitalRead(ROTARY_ENCODER_BUTTON_PIN);
+  }
+  _temp = _state; */
+
   //rotary_loop(_cursoSt, _encoderSwitch, _dynamic_menu_set);
   rotary_loop(_cursoSt, _encoderSwitch, _dynamic_menu_set);
 }
@@ -191,7 +209,7 @@ void Glb::updateData(Data dt)
   // placement[2] : 2 -> moutain(TEMPERATURE) / urban(TEMPERATURE) / custom(TEMPERATURE)
   // placement[3] : 3 -> for_each_mode(CURRENT_TIME)
 
-  //moutain mode
+  //global data
   if(dt._device_connected != _old_data._device_connected) {
     if(dt._device_connected == "yes") {
       deviceStatus(deviceConnected);
@@ -202,25 +220,82 @@ void Glb::updateData(Data dt)
       deviceConnected = false;
     }
   } 
-  if(dt._get_speed != _old_data._get_speed) {
-    drawData(convertDataToString(dt._get_speed), 0);
-    _old_data._get_speed = dt._get_speed;
+  if(dt._get_time != _old_data._get_time) {
+      drawTime(convertDataToString(dt._get_time));
+      _old_data._get_time = dt._get_time;
   }
-  if(dt._get_altitude != _old_data._get_altitude) {
-    drawData(convertDataToString(dt._get_altitude), 1);
-    _old_data._get_altitude = dt._get_altitude;
+  if(dt._get_phone_battery != _old_data._get_phone_battery) {
+    get_battery_level(PHONE_BATTERY, convertDataToInt(dt._get_phone_battery));
+    _old_data._get_phone_battery = dt._get_phone_battery;
   }
   if(dt._get_local_temperature != _old_data._get_local_temperature) {
     drawData(convertDataToString(dt._get_local_temperature), 2);
     _old_data._get_local_temperature = dt._get_local_temperature;
   }
-  if(dt._get_time != _old_data._get_time) {
-    drawTime(convertDataToString(dt._get_time));
-    _old_data._get_time = dt._get_time;
+
+  //moutain mode  
+  if(_current_mode == MOUNTAIN)
+  {
+    if(_old_mode != _current_mode) {
+      drawData(convertDataToString(dt._get_speed), 0);
+      drawData(convertDataToString(dt._get_altitude), 1);
+      drawData(convertDataToString(_old_data._get_local_temperature), 2);
+      _old_mode = _current_mode;
+    }
+    if(dt._get_speed != _old_data._get_speed) {
+      drawData(convertDataToString(dt._get_speed), 0);
+      _old_data._get_speed = dt._get_speed;
+    }
+    if(dt._get_altitude != _old_data._get_altitude) {
+      drawData(convertDataToString(dt._get_altitude), 1);
+      _old_data._get_altitude = dt._get_altitude;
+    }
   }
-  if(dt._get_phone_battery != _old_data._get_phone_battery) {
-    get_battery_level(PHONE_BATTERY, convertDataToInt(dt._get_phone_battery));
-    _old_data._get_phone_battery = dt._get_phone_battery;
+  else if (_current_mode == URBAN)  //urban mode
+  {
+    if(_old_mode != _current_mode) {
+      drawData("117", 0);
+      drawData(convertDataToString(dt._get_speed), 1);
+      drawData(convertDataToString(_old_data._get_local_temperature), 2);
+      _old_mode = _current_mode;
+    }
+    if(dt._get_gps != _old_data._get_gps) {
+      #ifdef DEV_APP_IN_PROGRESS
+      drawData("111", 0);
+      #else
+      drawData(convertDataToString(dt._get_speed), 0);
+      #endif
+      _old_data._get_gps = dt._get_gps;
+    }
+    if(dt._get_speed != _old_data._get_speed) {
+      drawData(convertDataToString(dt._get_speed), 1);
+      _old_data._get_speed = dt._get_speed;
+    }
+  }
+  else if (_current_mode == CUSTOM)  //custom mode
+  {
+    if(_old_mode != _current_mode) {
+       drawData("4.9", 0);
+       drawData("46", 1);
+       drawData(convertDataToString(_old_data._get_local_temperature), 2);
+      _old_mode = _current_mode;
+    }
+    if(dt._get_vertical_speed != _old_data._get_vertical_speed) {
+      #ifdef DEV_APP_IN_PROGRESS
+      drawData("4.8", 0);
+      #else
+      drawData(convertDataToString(dt._get_vertical_speed), 0);
+      #endif
+      _old_data._get_vertical_speed = dt._get_vertical_speed;
+    }
+    if(dt._get_wind_speed != _old_data._get_wind_speed) {
+      #ifdef DEV_APP_IN_PROGRESS
+      drawData("46", 1);
+      #else
+      drawData(convertDataToString(dt._get_wind_speed), 1);
+      #endif
+      _old_data._get_wind_speed = dt._get_wind_speed;
+    }
   }
 }
 

@@ -34,9 +34,10 @@
         void drawMenuTitle(String leftTitle, String centerTitle, String rightTitle);
         void drawTime(String actual_time);
         void drawData(String str, int placement);
-        void drawUnit(MODE actualMode);
+        void drawUnit(MODE actualMode, bool menuDynamic);
         void clearUnit(void);
         void clearData(int placement);
+        void drawIconMode(MODE actualMode);
         
         void deviceBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
         void phoneBatteryManagement(uint8_t batteryLevel, bool arcRoundedEnd, uint8_t thickness);
@@ -45,12 +46,16 @@
         
         static void pngDrawBLELogoStatus(PNGDRAW *pDraw);
         static void pngDrawLogo(PNGDRAW *pDraw);
-        static void pngDrawMountainIcon(PNGDRAW *pDraw);
-        static void pngDrawUrbanIcon(PNGDRAW *pDraw);
-        static void pngDrawCustomIcon(PNGDRAW *pDraw);
+        static void pngDrawMountainIconMenu(PNGDRAW *pDraw);
+        static void pngDrawUrbanIconMenu(PNGDRAW *pDraw);
+        static void pngDrawCustomIconMenu(PNGDRAW *pDraw);
+        static void pngDrawMountainIconActualMode(PNGDRAW *pDraw);
+        static void pngDrawUrbanIconActualMode(PNGDRAW *pDraw);
+        static void pngDrawCustomIconActualMode(PNGDRAW *pDraw);
 
         bool deviceConnected = false;
         MODE _current_mode = MOUNTAIN;
+        MODE _old_mode = MOUNTAIN;
 
     private:
         TFT_eSprite plane_s = TFT_eSprite(&_display);
@@ -73,16 +78,19 @@
 
         TFT_eSprite _currentTimeSprite = TFT_eSprite(&_display);
 
+        TFT_eSprite _actualModeIcon = TFT_eSprite(&_display);
+
         uint8_t _centerX;
         uint8_t _centerY;
         uint64_t _backgroundColor;
         uint8_t _resolution;
         uint8_t _radius;
-        BATTERYCOLOR _arcBatteryColor;
+        BATTERYCOLOR _arcBatteryColor = GREEN;
         int16_t _rc;
 
         //MODE _current_mode = MOUNTAIN;
         uint8_t _inner_radius;
+        uint8_t _rad;
     };
 
 #endif

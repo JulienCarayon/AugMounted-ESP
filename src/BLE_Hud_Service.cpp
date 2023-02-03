@@ -48,8 +48,12 @@ void BLE_Hud_Service::initserviceUUID(void)
     Serial.println("1- Please scan for BLE devices in the app");
     Serial.println("2- Connect to AugMounted");
 
+    #ifdef WROVER_BOARD
     // Create the BLE Device
     BLEDevice::init("AugMounted Pro");
+    #else
+    BLEDevice::init("AugMounted DEV");
+    #endif
 
     // Create the BLE Server
     pServer = BLEDevice::createServer();
@@ -156,7 +160,7 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
 
         // Value created and assigned by hud :
         // Soft version
-        pCharacteristicSw->setValue("V1.1.2");
+        pCharacteristicSw->setValue("V1.1.6");
         // Hard version
         pCharacteristicHw->setValue("V1.1.3");
         // State battery
@@ -218,10 +222,14 @@ Data BLE_Hud_Service::hudconnected2(uint8_t battery_level)
         deviceDisconnected = deviceConnected;
 
         new_data._device_connected = "no";
-        new_data._get_altitude = "--";
         new_data._get_speed = "--";
-        new_data._get_local_temperature = "--";
+        new_data._get_altitude = "--";
         new_data._get_time = "--:--";
+        new_data._get_gps = "--";
+        new_data._get_phone_battery = "0";
+        new_data._get_local_temperature = "--";
+        new_data._get_vertical_speed = "--";
+        new_data._get_wind_speed = "--";
     }
 
     return new_data;
